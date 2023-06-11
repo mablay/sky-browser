@@ -1,0 +1,27 @@
+{
+  "name": "nuxt-app",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare"
+  },
+  "devDependencies": {
+    "@nuxt/devtools": "latest",
+    "@types/lz4": "^0.6.1",
+    "@types/node": "^18",
+    "@types/three": "^0.152.1",
+    "@vueuse/core": "^10.1.2",
+    "@vueuse/nuxt": "^10.1.2",
+    "nuxt": "^3.5.2"
+  },
+  "dependencies": {
+    "leather": "^3.0.3",
+    "lz4": "^0.6.5",
+    "lz4js": "^0.2.0",
+    "three": "^0.153.0",
+    "three-perspective": "^1.0.0"
+  }
+}
