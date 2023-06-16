@@ -4,6 +4,7 @@ export default defineNuxtConfig({
   css: ['/assets/style.css'],
   devtools: { enabled: false },
   app: {
+    baseURL: process.env.NODE_ENV === 'production' ? '/sky-browser/' : '/',
     head: { title: 'Sky Browser' }
   },
   modules: ['@vueuse/nuxt']

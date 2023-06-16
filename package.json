@@ -8,7 +8,8 @@
     "https": "NODE_TLS_REJECT_UNAUTHORIZED=0 nuxt dev --https --ssl-cert localhost.crt --ssl-key localhost.key",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
-    "postinstall": "nuxt prepare"
+    "postinstall": "nuxt prepare",
+    "deploy": "npx gh-pages --dotfiles -d .output/public"
   },
   "devDependencies": {
     "@types/node": "^18",

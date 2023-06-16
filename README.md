@@ -6,9 +6,9 @@ This is a colaborative effort. All the hard work has been done by others.
 
 I'm just bringing it to the browser.
 
-This project is lacking properly documentation.
+This project is also lacking proper documentation.
 
-Checkout the demo for now.
+Checkout the [demo](https://mablay.github.io/sky-browser/) for now.
 
 ---
 
