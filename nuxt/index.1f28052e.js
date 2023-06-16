@@ -1,4 +1,4 @@
-import{_ as c}from"./nuxt-link.bd2b0039.js";import{a as i,b as d,e,f as n,w as a,o as r,p as _,h as l}from"./entry.267fb059.js";const h={},o=s=>(_("data-v-4926b4e1"),s=s(),l(),s),u={class:"page"},p={class:"container"},f=o(()=>e("h1",null,"Sky Browser",-1)),m={class:"row"},v={class:"col"},x=o(()=>e("div",{class:"card"},"Images",-1)),g={class:"col"},k=o(()=>e("div",{class:"card"},"Meshes",-1)),w=o(()=>e("div",{class:"about"},[e("pre",null,`Status: Mesh decoding works, images not yet
+import{_ as c}from"./nuxt-link.ce62dc1b.js";import{a as i,b as d,e,f as n,w as a,o as r,p as _,h as l}from"./entry.6def299f.js";const h={},o=s=>(_("data-v-4926b4e1"),s=s(),l(),s),u={class:"page"},p={class:"container"},f=o(()=>e("h1",null,"Sky Browser",-1)),m={class:"row"},v={class:"col"},x=o(()=>e("div",{class:"card"},"Images",-1)),g={class:"col"},k=o(()=>e("div",{class:"card"},"Meshes",-1)),w=o(()=>e("div",{class:"about"},[e("pre",null,`Status: Mesh decoding works, images not yet
 
 Credits to:
 * TGC for their wonderful work
