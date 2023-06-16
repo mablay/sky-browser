@@ -1,3 +1,6 @@
+/* this file is @deprecated in favour of useAssets */
+// TODO: use isomorphic mesh parser. This one is NodeJS only!
+
 // import { decompress } from 'lz4js'
 import { decodeBlock } from 'lz4'
 import { readFileSync } from 'fs'
@@ -19,18 +22,19 @@ export function readMesh (path: string) {
   const src = buffer.subarray(0x56, 0x56 + compressedSize)
   const dest = Buffer.alloc(uncompressedSize)
   decodeBlock(src, dest)
+  // writeFileSync(path.concat('.imhex'), dest)
   
   // read params from decompressed buffer
   const sharedVertexCount = dest.readUInt32LE(0x74)
   const totalVertexCount = dest.readUInt32LE(0x78)
   const pointCount = dest.readUInt32LE(0x80)
   const uvCount = dest.readUInt32LE(0x74)
-  console.log({
-    sharedVertexCount,
-    totalVertexCount,
-    pointCount,
-    uvCount
-  })
+  // console.log({
+  //   sharedVertexCount,
+  //   totalVertexCount,
+  //   pointCount,
+  //   uvCount
+  // })
   
   // build vertex buffer
   const vertexBuffer:number[] = []
@@ -67,10 +71,10 @@ export function readMesh (path: string) {
     indexBuffer.push(v1, v2, v3)
   }
   
-  console.log({
-    vertexBuffer,
-    indexBuffer
-  })
+  // console.log({
+  //   vertexBuffer,
+  //   indexBuffer
+  // })
 
   return {
     compressedSize,

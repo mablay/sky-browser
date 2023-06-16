@@ -13,3 +13,7 @@ dist
 public/texture.jpg
 public/apk
 /foo.*
+
+/*.crt
+/*.key
+lib/cpp

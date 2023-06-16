@@ -1,6 +1,7 @@
 # Mesh
 
-Here's some example script that's supposed to parse .mesh files. ( [source](https://www.vg-resource.com/thread-39211.html) )
+Here's the original python mesh parsing script from longbyte1:
+[source](https://www.vg-resource.com/thread-39211.html)
 
 ```py
 import ctypes

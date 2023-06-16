@@ -2,8 +2,8 @@ import { readFileSync } from 'fs'
 // @ts-ignore
 import { readMediaAttributes } from 'leather'
 import { ktxPath, ktxUrl } from '../../config'
-import { parseKtx } from '../../lib/ktx'
-import { writeFile } from 'fs/promises'
+import { parseKtx } from '../../lib/ktx/ktx'
+// import { writeFile } from 'fs/promises'
 
 export function ktxInfo (path: string) {
   console.log('ktx-parse:', path)
@@ -26,6 +26,6 @@ export default defineEventHandler(async (event) => {
 
   const parsed = await parseKtx(ktxUrl)
   // @ts-ignore
-  writeFile('foo.png', parsed.mipmaps[0].data)
+  // writeFile('foo.png', parsed.mipmaps[0].data)
   return { info, parsed }
 })
