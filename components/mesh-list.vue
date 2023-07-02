@@ -11,7 +11,7 @@
         <Icon :icon="downloadSvg" :size="24" />
       </div>
     </div>
-    <div class="mesh-list">
+    <div class="mesh-list scroll-x">
       <div class="scroll-y">
         <div
           v-show="showList"
@@ -61,7 +61,7 @@ onKeyStroke('ArrowUp', (e) => {
   const i = data.value.findIndex(name => name === meshName.value)
   if (i < 1 || i >= data.value.length) return
   // emit('update:modelValue', data.value[i - 1])
-  meshName.value = data.value[i + 1]
+  meshName.value = data.value[i - 1]
   document.getElementById(`mesh-${i}`)?.scrollIntoView({ block: 'center' })
 })
 
@@ -151,6 +151,10 @@ async function download () {
 }
 
 .scroll-y {
+  direction: ltr;
+  padding-left: 12px;  
+}
+.scroll-x {
   direction: ltr;
   padding-left: 12px;  
 }
