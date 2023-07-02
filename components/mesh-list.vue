@@ -7,6 +7,9 @@
       <div @click="toggleList" class="btn">
         {{ toggleTitle }}
       </div>
+      <div @click="download" class="btn btn-icon">
+        <Icon :icon="downloadSvg" :size="24" />
+      </div>
     </div>
     <div class="mesh-list">
       <div class="scroll-y">
@@ -23,8 +26,12 @@
 </template>
 
 <script setup lang="ts">
+import { Scene } from 'three';
+import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter'
+import downloadSvg from '~/assets/download.svg'
+
 const emit = defineEmits(['update:modelValue'])
-const { meshes, meshName } = useAssets()
+const { loadMesh, selectedMeshAsset, meshes, meshName } = useAssets()
 
 const showList = ref(true)
 const toggleTitle = computed(() => showList.value ? 'Hide list' : 'Show list')
@@ -61,6 +68,28 @@ onKeyStroke('ArrowUp', (e) => {
 const data = computed(() => meshes.value.map(asset => asset.name))
 // const { data } = useFetch('/api/meshes')
 
+async function download () {
+  console.log('download', selectedMeshAsset.value)
+
+  const asset = selectedMeshAsset.value
+  if (!asset) return
+  const mesh = await loadMesh(asset.entry)
+  const scene = new Scene()
+  scene.add(mesh)
+  const exporter = new GLTFExporter()
+
+  const options = { binary: true }
+
+  exporter.parse(scene, gltf => {
+    console.log('download GLTF:', gltf)
+    const a = document.createElement('a')
+    const file = new Blob([<ArrayBuffer>gltf], {type: 'model/gltf-binary'})
+    a.href = URL.createObjectURL(file)
+    a.download = `${asset.name}.gltf`
+    a.click()
+  }, console.error, options)
+}
+
 </script>
 
 <style scoped>
@@ -87,7 +116,7 @@ const data = computed(() => meshes.value.map(asset => asset.name))
   margin-top: 12px;
   padding: 8px 12px 8px 12px;
   /* text-shadow: 0px 0px 4px #0004; */
-  border: 1px solid white;
+  outline: 1px solid white;
   border-radius: 8px;
   /* width: 90px; */
   background-color: #FFF4;
@@ -100,6 +129,15 @@ const data = computed(() => meshes.value.map(asset => asset.name))
   border-radius: 50px;
   padding-right: 14px;
 }
+.btn-icon {
+  border-radius: 50px;
+  padding-right: 14px;
+  margin: 0px 0px 0px 12px;
+  padding: 6px;
+  line-height: 0px;
+  vertical-align: bottom;
+}
+
 .mesh-list {
   direction: rtl;
   overflow-y: scroll;

@@ -1,7 +1,7 @@
 // @ts-ignore
 import { decompressBlock } from 'lz4js'
 import { ZipReader, type Entry, BlobReader, BlobWriter } from '@zip.js/zip.js'
-import { BufferGeometry, Float32BufferAttribute, Mesh, MeshStandardMaterial } from 'three'
+import { BufferGeometry, Float32BufferAttribute, Mesh, MeshStandardMaterial, MeshStandardMaterialParameters } from 'three'
 import { fileDrop } from '~/lib/file-drop'
 
 export type Asset = {
@@ -55,16 +55,17 @@ export default function useAssets () {
     }).catch(console.error)
   }
 
-  async function loadMesh (entry: Entry, cubeRenderTarget: THREE.WebGLCubeRenderTarget) {
+  async function loadMesh (entry: Entry, cubeRenderTarget?: THREE.WebGLCubeRenderTarget) {
     const { indexBuffer, vertexBuffer } = await parseMeshEntry(entry)
 
     const geometry = new BufferGeometry()
   
-    const material = new MeshStandardMaterial({
-      envMap: cubeRenderTarget.texture,
+    const options:MeshStandardMaterialParameters = {
       roughness: 0.20,
       metalness: 1
-    })
+    }
+    if (cubeRenderTarget) options.envMap = cubeRenderTarget.texture
+    const material = new MeshStandardMaterial(options)
   
     geometry.setIndex(indexBuffer)
     console.log({
