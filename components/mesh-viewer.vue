@@ -8,6 +8,8 @@ import { ACESFilmicToneMapping, EquirectangularReflectionMapping, Group, Sphere 
 import { meshExampleScene } from '~/lib/mesh/mesh-scene'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader'
 
+const config = useRuntimeConfig()
+
 const perspective = ref<InstanceType<typeof Perspective>>()
 
 const { loadMesh, selectedMeshAsset, meshes, meshName } = useAssets()
@@ -54,7 +56,7 @@ onMounted(() => {
   // })
 
   // equirectangular HDR image from https://polyhaven.com/a/kloofendal_48d_partly_cloudy_puresky
-  new RGBELoader().setPath('/').load('kloofendal_48d_partly_cloudy_puresky_1k.hdr', function ( texture ) {
+  new RGBELoader().setPath(config.baseURL).load('kloofendal_48d_partly_cloudy_puresky_1k.hdr', function ( texture ) {
     texture.mapping = EquirectangularReflectionMapping
     scene.background = texture;
     scene.environment = texture;
