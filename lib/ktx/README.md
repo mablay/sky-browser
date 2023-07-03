@@ -42,3 +42,27 @@ File format: KTXv2 | DTX
 ## Further reading
 
 * [Article about texture compression and patents](http://www.colecovision.eu/graphics/texture_compression.pdf)
+
+## Desktop browser support for ETC2
+
+AFAIU, ETC2 is common for mobile android devices. But not for desktop environments.
+
+CLI tools like kram can transcode ETC2 to SRGB. But it's rather large.
+
+Going down the rabbit hole, here are some repositories I came across that seem smaller and more specialized in the matter.
+
+
+* [kram](https://github.com/alecazam/kram) Encode/decode/info to KTX/KTX2/DDS files with LDR/HDR and BC/ASTC/ETC2. Mac/Win C++11 too, Mac viewer, and scripts for batch processing textures.
+* [texgenpack](https://github.com/hglm/texgenpack) Compress, decompress and convert texure files using a genetic algorithm. Supports KTX, DDS, ETC2, BC6/BC7 etc.
+* [detex](https://github.com/hglm/detex) Low-level library for decompression and manipulation of texture blocks compressed using formats such as BC1/DXT1/S3TC, BC2-BC3, BC4/RGTC1, BC5/RGTC2, BC6 (BPTC_FLOAT), BC7 (BPTC), ETC1 and the ETC2 family, loading of KTX and DDS files, and conversion between pixel formats
+
+Summary
+
+* kram is quite mighty but beyond me to port to anything browser compatible.
+* detex is feather light but lacks support for all the differnt ktx image formats sky uses.
+* after stripping texgenpack of its GUI and compression features it's also without heavy 
+  dependencies and seems to support more image formats than detex
+
+## Emscripten + TexGenPack
+
+Working with texgenpack on a mac required me to switch to a linux container and operate from there.
