@@ -29,3 +29,12 @@ emcc increment.c -o increment.mjs \
 ```
 
 ...should have read the `emcc` syntax first 😊
+
+### VSC IntelliSense + Emscriptten
+
+On Mac, my `emscripten.h` was unknown to Intellisense and I needed to add it to the C/C++ config PATH.
+
+```pre
+${workspaceFolder}/**
+/usr/local/Cellar/emscripten/3.1.42/libexec/system/include/
+```

@@ -1,14 +1,14 @@
 #include <emscripten.h>
-// #include <math.h>
+#include "zz_greet.h"
+#include <stdlib.h>
+#include <stdint.h>
+#include <string.h>
+#include <ctype.h>
+// #include "texgenpack.h"
 
 EMSCRIPTEN_KEEPALIVE
 
-
 // emcc hello.cpp -sEXPORTED_FUNCTIONS=_int_sqrt -sEXPORTED_RUNTIME_METHODS=ccall,cwrap
-
-// int int_sqrt(int x) {
-//   return sqrt(x);
-// }
 
 int fib (int n) {
   if (n <= 0) {
