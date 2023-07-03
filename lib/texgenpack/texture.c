@@ -29,6 +29,10 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include "strcasecmp.h"
 #endif
 
+#include <emscripten.h>
+
+EMSCRIPTEN_KEEPALIVE
+
 /*
 
 	The TextureInfo structure has the following fields:

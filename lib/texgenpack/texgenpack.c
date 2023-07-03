@@ -19,8 +19,8 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <string.h>
 #include <ctype.h>
+#include <string.h>
 // #include <malloc.h>
 #include "texgenpack.h"
 #include "decode.h"
@@ -497,6 +497,20 @@ static int file_type_id[NU_FILE_TYPES] = {
 	FILE_TYPE_PNG, FILE_TYPE_PPM, FILE_TYPE_KTX, FILE_TYPE_PKM, FILE_TYPE_DDS, FILE_TYPE_ASTC };
 
 static int determine_filename_type(const char *filename) {
+	if (strlen(filename) < 5) {
+		printf("Error -- filename %s too short to be a valid file.\n", filename);
+		exit(1);
+	}
+	for (int i = 0; i < NU_FILE_TYPES; i++)
+		if (strcasecmp(&filename[strlen(filename) - strlen(extension[i])], extension[i]) == 0)
+			return file_type_id[i];
+	return FILE_TYPE_UNDEFINED;
+}
+
+int get_filename_type (char *filename) {
+  // char* ptr = stringToNewUTF8(filename);
+  printf("filename: %s \n", filename);
+  // free(ptr);
 	if (strlen(filename) < 5) {
 		printf("Error -- filename %s too short to be a valid file.\n", filename);
 		exit(1);
