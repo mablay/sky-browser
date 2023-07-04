@@ -76,7 +76,6 @@ void optimize_block_alpha_dxt3(unsigned char *bitstring, unsigned char *alpha_va
 int draw_block_rgba_astc(const unsigned char *bitstring, unsigned int *image_buffer, int flags);
 void convert_astc_texture_to_image(Texture *texture, Image *image);
 void decompress_astc_file(const char *filename, Image *image);
-void compress_image_to_astc_texture(Image *image, int texture_type, Texture *texture);
 int match_astc_block_size(int w, int h);
 int get_astc_block_size_width(int astc_block_type);
 int get_astc_block_size_height(int astc_block_type);

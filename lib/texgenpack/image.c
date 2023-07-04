@@ -65,9 +65,6 @@ void load_image(const char *filename, int filetype, Image *image) {
 //		case FILE_TYPE_PPM :
 //			load_ppm_file(filename, image);
 //			break;
-		case FILE_TYPE_PNG :
-			load_png_file(filename, image);
-			break;
 		default :
 			printf("Error -- no support for loading image file format.\n");
 			exit(1);
@@ -122,9 +119,6 @@ void save_image(Image *image, const char *filename, int filetype) {
 //	case FILE_TYPE_PPM :
 //		load_ppm_file(filename, image);
 //		break;
-	case FILE_TYPE_PNG :
-		save_png_file(image, filename);
-		break;
 	default :
 		printf("Error -- no support for saving image file format.\n");
 		exit(1);

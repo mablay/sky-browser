@@ -286,8 +286,6 @@ void save_dds_file(Texture *texture, int nu_mipmaps, const char *filename);
 void load_astc_file(const char *filename, Texture *texture);
 void save_astc_file(Texture *texture, const char *filename);
 void load_ppm_file(const char *filename, Image *image);
-void load_png_file(const char *filename, Image *image);
-void save_png_file(Image *image, const char *filename);
 
 // Defined in texture.c
 
