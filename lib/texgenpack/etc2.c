@@ -973,7 +973,7 @@ int block4x4_etc2_punchthrough_get_mode(const unsigned char *bitstring) {
 // Draw a 4x4 pixel block using 64-bit ETC2 PUNCHTHROUGH ALPHA compression data.
 
 int draw_block4x4_etc2_punchthrough(const unsigned char *bitstring, unsigned int *image_buffer, int flags) {
-  printf("draw_block4x4_etc2_punchthrough...%s\n", bitstring);
+  // printf("draw_block4x4_etc2_punchthrough...%s\n", bitstring);
 	int R = (bitstring[0] & 0xF8);
 	R += complement3bitshifted(bitstring[0] & 7);
 	int G = (bitstring[1] & 0xF8);

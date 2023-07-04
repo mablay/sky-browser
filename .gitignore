@@ -17,3 +17,5 @@ public/apk
 /*.crt
 /*.key
 lib/cpp
+lib/texgenpack/a.out.js
+lib/texgenpack/a.out.wasm

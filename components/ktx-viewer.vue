@@ -1,35 +1,30 @@
 <template>
-  <Perspective ref="perspective" :scene="scene" />
+  <Perspective ref="perspective" :scene="scene" :antialias="false" />
 </template>
 
 <script setup lang="ts">
-import { Perspective, entities } from 'three-perspective'
-import { ktxExampleScene, ktxImage } from '~/lib/ktx/ktx'
-import { ktxUrl } from '@/config'
+import { Perspective } from 'three-perspective'
+import { ktxExampleScene } from '~/lib/ktx/ktx'
+import { Group } from 'three'
+
+const { loadImage, selectedImageAsset } = useAssets()
 
 const perspective = ref<InstanceType<typeof Perspective>>()
 
 const scene = ktxExampleScene()
-scene.add(entities.createBox([0, 0, 1]))
+const group = new Group()
+scene.add(group)
 
-// trigger some server side stuff
-
-// const info = await $fetch(`/api/ktx?name=${ktxName}t`)
-// console.log('info:', info)
-
-onMounted(() => {
+watch(selectedImageAsset, async () => {
   // @ts-ignore
-  const { renderer } = perspective.value
-  if (!renderer) throw new Error('Missing renderer!')
-  // const ext = renderer.getExtension("WEBGL_compressed_texture_etc1")
-  // console.log('ext:', ext)
-  ktxImage(ktxUrl, renderer)
-    .then(image => scene.add(image))
-    .then(() => {
-      // @ts-ignore
-      perspective.value?.render()
-    })
+  const { render } = perspective.value
+  if (!render || !selectedImageAsset.value) return
 
+  const mesh = await loadImage(selectedImageAsset.value.entry)
+
+  group.clear()
+  group.add(mesh)
+  render()
 })
 
 </script>

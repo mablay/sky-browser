@@ -34,12 +34,12 @@ EMSCRIPTEN_KEEPALIVE
 
 // Local functions in this file.
 
-static int file_exists(const char *filename);
-static int determine_filename_type(const char *filename);
-static void compare_files();
-static void decompress();
-static void compress();
-// static void calibrate();
+int file_exists(const char *filename);
+int determine_filename_type(const char *filename);
+void compare_files();
+void decompress(char* source_filename, char* dest_filename);
+void compress(char* source_filename, char* dest_filename);
+// void calibrate();
 
 // Variables reflecting command-line options.
 
@@ -73,7 +73,7 @@ int option_perceptive = 1;
 
 int option_deterministic = 0;
 
-static char *instructions1 =
+char *instructions1 =
 "texgenpack v0.9.6 -- Texture conversion and compression using a genetic algorithm.\n"
 "Usage: texgenpack <command> <options> <source filename> <destination filename>.\n"
 "\n"
@@ -81,7 +81,7 @@ static char *instructions1 =
 
 #define NU_COMMANDS 4
 
-static const char *commands[NU_COMMANDS] = {
+const char *commands[NU_COMMANDS] = {
 	"--compress", "--decompress", "--compare", "--calibrate" };
 
 #define NU_OPTIONS 24
@@ -113,7 +113,7 @@ enum {
 	OPTION_VERBOSITY,
 };
 
-static const char *options[NU_OPTIONS] = {
+const char *options[NU_OPTIONS] = {
 	"--level", "--ultra", "--fast", "--medium", "--slow",
 	"--non-perceptive",
 	"--format",
@@ -125,7 +125,7 @@ static const char *options[NU_OPTIONS] = {
 	"--progress", "--verbose", "--very-verbose", "--quiet", "--verbosity"
 };
 
-static const char *option_argument[NU_OPTIONS] = {
+const char *option_argument[NU_OPTIONS] = {
 	"<number>", "", "", "", "",
 	"",
 	"<format>",
@@ -137,7 +137,7 @@ static const char *option_argument[NU_OPTIONS] = {
 	"", "", "", "", "<number>",
 };
 
-static const char *option_description[NU_OPTIONS] = {
+const char *option_description[NU_OPTIONS] = {
 	"Compression level (0 to 50, 0 = fastest, 50 = slowest/best compression).",
 	"Ultra fast compression optimizing different blocks concurrently.",
 	"Fast compression method (level = 8) (default).",
@@ -459,7 +459,7 @@ int main(int argc, char **argv) {
 //			printf("Error -- expected image file as second argument.\n");
 //			exit(1);
 //		}
-		decompress();
+		// decompress();
 		exit(0);
 	}
 	if (command == COMMAND_COMPRESS) {
@@ -482,7 +482,7 @@ int main(int argc, char **argv) {
 	}
 }
 
-static int file_exists(const char *filename) {
+int file_exists(const char *filename) {
 	FILE *f = fopen(filename, "rb");
 	if (f == NULL)
 		return 0;
@@ -490,13 +490,13 @@ static int file_exists(const char *filename) {
 	return 1;
 }
 
-static const char *extension[NU_FILE_TYPES] = {
+const char *extension[NU_FILE_TYPES] = {
 	".png", ".ppm", ".ktx", ".pkm", ".dds", ".astc" };
 
-static int file_type_id[NU_FILE_TYPES] = {
+int file_type_id[NU_FILE_TYPES] = {
 	FILE_TYPE_PNG, FILE_TYPE_PPM, FILE_TYPE_KTX, FILE_TYPE_PKM, FILE_TYPE_DDS, FILE_TYPE_ASTC };
 
-static int determine_filename_type(const char *filename) {
+int determine_filename_type(const char *filename) {
 	if (strlen(filename) < 5) {
 		printf("Error -- filename %s too short to be a valid file.\n", filename);
 		exit(1);
@@ -521,7 +521,7 @@ int get_filename_type (char *filename) {
 	return FILE_TYPE_UNDEFINED;
 }
 
-static const char *get_extension(int filetype) {
+const char *get_extension(int filetype) {
 	for (int i = 0; i < NU_FILE_TYPES; i++) {
 		if (filetype == file_type_id[i])
 			return extension[i];
@@ -529,7 +529,7 @@ static const char *get_extension(int filetype) {
 	return NULL;
 }
 
-static void compare_files() {
+void compare_files() {
 	Image source_image, dest_image;
 	if (!option_quiet)
 		printf("Comparing %s to %s.\n", source_filename, dest_filename);
@@ -544,7 +544,13 @@ static void compare_files() {
 	compare_images(&source_image, &dest_image);
 }
 
-static void decompress() {
+void decompress(char* source_filename, char* dest_filename) {
+  source_filetype = determine_filename_type(source_filename);
+  dest_filetype = determine_filename_type(dest_filename);
+
+  printf("src: %s, %d\n", source_filename, source_filetype);
+  printf("dst: %s, %d\n", dest_filename, dest_filetype);
+
 	if (dest_filetype & FILE_TYPE_TEXTURE_BIT) {
 		if (option_texture_format != -1)
 			if (!(option_texture_format & TEXTURE_TYPE_UNCOMPRESSED_BIT)) {
@@ -615,11 +621,14 @@ static void decompress() {
 		save_image(&image, dest_filename, dest_filetype);
 }
 
-static void compress_callback(BlockUserData *user_data) {
+void compress_callback(BlockUserData *user_data) {
 	// Do nothing.
 }
 
-static void compress() {
+void compress(char* source_filename, char* dest_filename) {
+  source_filetype = determine_filename_type(source_filename);
+  dest_filetype = determine_filename_type(dest_filename);
+
 	Image image[32];
 	if (!option_quiet)
 		printf("Compressing %s to %s.\n", source_filename, dest_filename);
@@ -704,7 +713,7 @@ static void compress() {
 	save_texture(&texture[0], nu_mipmaps, dest_filename, dest_filetype);
 }
 
-// static void calibrate() {
+// void calibrate() {
 // 	Image image;
 // 	if (!option_quiet)
 // 		printf("Calibrating genetic parameters for compression of source file %s.\n", source_filename);

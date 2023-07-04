@@ -1,9 +1,5 @@
 import * as THREE from 'three'
-import * as constants from 'three/src/constants.js'
-import { entities } from 'three-perspective'
 import { KTXLoader } from 'three/examples/jsm/loaders/KTXLoader.js'
-import { loadKtx2 } from './ktx2'
-// import *  as libktx from '@/lib/libktx'
 
 export async function loadKtx (url: string) {
   console.log('[ktx] load:', url)
@@ -31,14 +27,14 @@ export async function parseKtx (url: string) {
 
 export function ktxExampleScene () {
   const scene = new THREE.Scene()
-  const light = new THREE.HemisphereLight('white', 'brown')
+  const light = new THREE.AmbientLight('white', 1)// new THREE.HemisphereLight('white', 'brown')
   scene.add(light)
   // const box = entities.createBox()
   // scene.add(box)
   return scene
 }
 
-export async function ktxImage (url: string, renderer: THREE.WebGLRenderer) {
+export async function ktxImage (url: string) {
 
   const texture = await loadKtx(url)
 
@@ -52,6 +48,6 @@ export async function ktxImage (url: string, renderer: THREE.WebGLRenderer) {
   })
   const plane = new THREE.Mesh(geometry, material)
   plane.position.set(0, 0, 1)
-  plane.rotation.set(Math.PI, 0, 0)
+  plane.rotation.set(Math.PI, Math.PI, 0)
   return plane
 }

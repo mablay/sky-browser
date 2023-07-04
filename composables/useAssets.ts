@@ -3,16 +3,22 @@ import { decompressBlock } from 'lz4js'
 import { ZipReader, type Entry, BlobReader, BlobWriter } from '@zip.js/zip.js'
 import { BufferGeometry, Float32BufferAttribute, Mesh, MeshStandardMaterial, MeshStandardMaterialParameters } from 'three'
 import { fileDrop } from '~/lib/file-drop'
+import { ktxImage } from '~/lib/ktx/ktx'
+import { useTexgenpack } from '~/lib/texgenpack/texgenpack'
+import { defaultImageName, defaultMeshName } from '~/config'
 
 export type Asset = {
   name: string
   type: 'mesh' | 'image'
   entry: Entry
 }
+
 export default function useAssets () {
   const assets = useState<Entry[]>('assets', () => [])
   /** selected mesh name */
-  const meshName = useState<string>('meshName', () => 'OrbitFinalTemple_01')
+  const meshName = useState<string>('meshName', () => defaultMeshName)
+  const imageName = useState<string>('imageName', () => defaultImageName)
+
   const meshes = computed(() => {
     const arr:Asset[] = []
     for (const asset of assets.value) {
@@ -29,9 +35,30 @@ export default function useAssets () {
     return arr
   })
 
+  const images = computed(() => {
+    const arr:Asset[] = []
+    for (const asset of assets.value) {
+      if (!asset.filename.endsWith('.ktx')) continue
+      const filename = asset.filename.split('/').pop()
+      if (!filename) continue
+      const name = filename?.substring(0, filename.length - 4)
+      arr.push({
+        name,
+        type: 'image',
+        entry: toRaw(asset)
+      })
+    }
+    return arr
+  })
+
   const selectedMeshAsset = computed(() => {
     if (!meshName.value || !meshes.value?.length) return
     return meshes.value.find(mesh => meshName.value === mesh.name)
+  })
+
+  const selectedImageAsset = computed(() => {
+    if (!imageName.value || !images.value?.length) return
+    return images.value.find(image => imageName.value === image.name)
   })
 
   function dropApk (event: DragEvent) {
@@ -50,7 +77,7 @@ export default function useAssets () {
         // const progress = offset / file.size
         entries.push(entry)
       }
-      console.log('Parsed APK with %n entries', entries.length)  
+      console.log('Parsed APK with %d entries', entries.length)  
       assets.value = entries
     }).catch(console.error)
   }
@@ -78,13 +105,46 @@ export default function useAssets () {
     return new Mesh(geometry, material)
   }
 
+  async function loadImage (entry: Entry) {
+    const texgenPromise = useTexgenpack()
+
+    const texgen = await texgenPromise
+    const filename = entry.filename.split('/').pop()
+    console.log('filename:', entry.filename)
+    if (!filename) throw new Error('Missing filename!')
+    const blobWriter = new BlobWriter()
+    const arrayBuffer = await entry.getData!(blobWriter).then(blob => blob.arrayBuffer())
+    // fetch(srcUrl).then(res => res.arrayBuffer())
+    console.log('file:', arrayBuffer)
+  
+    const imgBuffer = texgen.decompress(filename, new Uint8Array(arrayBuffer))
+    const dstUrl = URL.createObjectURL(new Blob([imgBuffer]))
+  
+    const imageMesh = await ktxImage(dstUrl)
+
+    return imageMesh
+  }
+
+  async function loadImageList () {
+    const list = await $fetch('/api/images')
+    if (list.length === 0) return
+    // remove existing images
+    assets.value = assets.value.filter(asset => !asset.filename.endsWith('.ktx'))
+    assets.value = <any>list
+  }
+
   return {
     assets,
     meshes,
+    images,
     meshName,
+    imageName,
     selectedMeshAsset,
+    selectedImageAsset,
     dropApk,
     loadMesh,
+    loadImage,
+    loadImageList,
   }
 }
 

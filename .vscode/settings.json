@@ -1,0 +1,12 @@
+{
+  "files.associations": {
+    "greet.h": "c",
+    "emscripten.h": "c",
+    "decode.h": "c",
+    "packing.h": "c",
+    "stdint.h": "c",
+    "texgenpack.h": "c",
+    "string": "c",
+    "iosfwd": "c"
+  }
+}

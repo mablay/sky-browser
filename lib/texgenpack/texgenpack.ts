@@ -22,38 +22,30 @@ export async function useTexgenpack () {
   //   m._free(buf)
   // }
 
-  function decompress (filename: string, buffer: Uint8Array) {
-    console.log('blob:', buffer.byteLength)
+  /** the filename is important, because it's used to determine the input type */
+  function decompress (srcFilename: string, srcBuffer: Uint8Array) {
+    console.log('FS.writeFile:', srcFilename, '| bytes:', srcBuffer.byteLength)
+    const dstFilename = 'out-'.concat(srcFilename)
 
-    m.FS.writeFile(filename, buffer)
-
-    const filetype = getFilenameType(filename)
+    /// write input file to MEMFS
+    m.FS.writeFile(srcFilename, srcBuffer)
     
     // --- LOAD IMAGE > ---
-    const allocFilename = m.stringToNewUTF8(filename)
-    // void load_image(const char *filename, int filetype, Image *image)
-    m._load_image(allocFilename, filetype, 0)
-    m._free(allocFilename)
+    const allocSrcFilename = m.stringToNewUTF8(srcFilename)
+    const allocDstFilename = m.stringToNewUTF8(dstFilename)
+
+    m._decompress(allocSrcFilename, allocDstFilename)
+
+    m._free(allocSrcFilename)
+    m._free(allocDstFilename)
     // --- < LOAD IMAGE ---
+    
+    /// read output file from MEMFS
+    const dstFile = m.FS.readFile(dstFilename)
+    m.FS.unlink(srcFilename)
+    m.FS.unlink(dstFilename)
 
-    // const buf = m._malloc(buffer.byteLength)
-    // m.HEAPU8.set(buffer, buf)
-    // m.ccall('my_function', 'number', ['number'], [buf])
-    // m._free(buf)
-
-    // unsigned int *pixels;
-    // int width;
-    // int height;
-    // int extended_width;
-    // int extended_height;
-    // int alpha_bits;			// 0 for no alpha, 1 if alpha is limited to 0 and 0xFF, 8 otherwise.
-    // int nu_components;		// Indicates the number of components.
-    // int bits_per_component;		// 8 or 16.
-    // int is_signed;			// 1 if the components are signed, 0 if unsigned.
-    // int srgb;			// Whether the image is stored in sRGB format.
-    // int is_half_float;		// The image pixels are combinations of half-floats. The pixel size is 64-bit.
-  
-    return []
+    return dstFile
   }
 
   return {
