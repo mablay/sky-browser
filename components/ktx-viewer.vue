@@ -4,6 +4,7 @@
 
 <script setup lang="ts">
 import { Perspective } from 'three-perspective'
+import useAssets from '~/composables/useAssets'
 import { ktxExampleScene } from '~/lib/ktx/ktx'
 import { Group } from 'three'
 

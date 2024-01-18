@@ -16,7 +16,7 @@
       </div>
       <div class="about">
         <pre>
-Status: Mesh decoding works, images not yet
+Status: Most meshes and textures can be displayed
 
 Credits to:
 * TGC for their wonderful work
@@ -33,7 +33,9 @@ Relevant JS libraries:
 * @zip.js/zip.js
 * vue3
 * nuxt3
-* kram (will be used for Textures)
+
+texgenpack has been compiled to WASM, so
+your browser can load ETC2 KTX files.
         </pre>
       </div>
     </div>
@@ -91,6 +93,9 @@ h1 {
   background-color: #DDD4;
   border-radius: 8px;
   color: white;
+}
+.card:hover {
+  background-color: #DDD6;
 }
 
 a {

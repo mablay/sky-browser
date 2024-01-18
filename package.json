@@ -19,6 +19,7 @@
     "nuxt": "^3.6.1"
   },
   "dependencies": {
+    "@petamoriken/float16": "^3.8.4",
     "@zip.js/zip.js": "^2.7.16",
     "leather": "^3.0.3",
     "lz4js": "^0.2.0",

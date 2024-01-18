@@ -6,6 +6,7 @@ import { fileDrop } from '~/lib/file-drop'
 import { ktxImage } from '~/lib/ktx/ktx'
 import { useTexgenpack } from '~/lib/texgenpack/texgenpack'
 import { defaultImageName, defaultMeshName } from '~/config'
+import { getFloat16 } from '@petamoriken/float16'
 
 export type Asset = {
   name: string
@@ -83,10 +84,10 @@ export default function useAssets () {
   }
 
   async function loadMesh (entry: Entry, cubeRenderTarget?: THREE.WebGLCubeRenderTarget) {
-    const { indexBuffer, vertexBuffer } = await parseMeshEntry(entry)
+    const { indexBuffer, vertexBuffer, normBuffer } = await parseMeshEntry(entry)
 
     const geometry = new BufferGeometry()
-  
+
     const options:MeshStandardMaterialParameters = {
       roughness: 0.20,
       metalness: 1
@@ -100,7 +101,10 @@ export default function useAssets () {
       vertices: vertexBuffer.length
     })
     geometry.setAttribute('position', new Float32BufferAttribute(vertexBuffer, 3))
+    // geometry.setAttribute('normal', new Float32BufferAttribute(normBuffer, 3))
+
     geometry.computeVertexNormals()
+    // console.log(geometry)
   
     return new Mesh(geometry, material)
   }
@@ -121,6 +125,7 @@ export default function useAssets () {
     const dstUrl = URL.createObjectURL(new Blob([imgBuffer]))
   
     const imageMesh = await ktxImage(dstUrl)
+    // URL.revokeObjectURL(dstUrl)
 
     return imageMesh
   }
@@ -203,20 +208,31 @@ function parseMesh (view: DataView) {
   }
 
   // build uv buffer
+  console.log('uvBufferOffset:', offset)
   const uvBuffer:number[] = []
-  const uvHeaderSize = uvCount * 4 - 4
-  offset += uvHeaderSize
   for (let i = 0; i < uvCount; i++) {
-    // # 2 half-precision floats
-    // u, v = struct.unpack('<4xee8x', buf.read(16))
-    // uv_buffer.append((u, v))
+    const u = getFloat16(view, offset + 0, true)
+    const v = getFloat16(view, offset + 2, true)
+    offset += 4
+  }
+  // const uvHeaderSize = uvCount * 4
+  // offset += uvHeaderSize
+
+  // build norm buffer
+  console.log('normBufferOffset:', offset)
+  const normBuffer:number[] = []
+  for (let i = 0; i < uvCount; i++) {
+    const x = view.getFloat32(offset + 4, true)
+    const y = view.getFloat32(offset + 8, true)
+    const z = view.getFloat32(offset + 12, true)
+    // unknown 4th component
     offset += 16
+    normBuffer.push(x, y, z)
   }
 
   // build index buffer
   const indexBuffer: number[] = []
   const faceCount = Math.floor(totalVertexCount / 3)
-  offset += 4
   for (let i = 0; i < faceCount; i++) {
     const v1 = view.getUint16(offset + 0, true)
     const v2 = view.getUint16(offset + 2, true)
@@ -237,6 +253,7 @@ function parseMesh (view: DataView) {
     uvCount,
     vertexBuffer,
     indexBuffer,
+    normBuffer,
     uvBuffer
   }  
 }
