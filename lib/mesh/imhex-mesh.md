@@ -5,33 +5,30 @@ Yet it is an incomplete decoding.
 
 ```c++
 #include <std/string.pat>
-
-u32 sharedVertexCount @ 0x74;
-u32 totalVertexCount @ 0x78;
-u32 pointCount @ 0x80;
-u32 uvCount @ 0x74;
-
-float vertexBuffer[sharedVertexCount * 4] @ 0xB3;
-
-// u32 uvOffset = 0xB3 + sharedVertexCount * 16 + uvCount * 4 - 4;
-u32 uvHeaderOffset = addressof(vertexBuffer) + sizeof(vertexBuffer);
-
-u32 uvHeader[uvCount] @ uvHeaderOffset;
-
-u32 uvOffset = uvHeaderOffset + sizeof(uvHeader);
-
 using float16 = u16 [[format]];
-float16 uvBuffer[uvCount * 8] @ uvOffset;
 
-u32 faceCount = totalVertexCount / 3;
+u32 vertexCount @ 0x74;
+u32 cornerCount @ 0x78;
+u32 pointCount @ 0x80;
 
-u32 idxbufOffset = uvOffset + sizeof(uvBuffer);
+// vertices
+float vertexBuffer[vertexCount * 4] @ 0xB3;
 
+// UV coordinates
+u32 uvOffset = addressof(vertexBuffer) + sizeof(vertexBuffer);
+u32 uvBuffer[vertexCount] @ uvOffset;
+
+// normal vectors?
+u32 normalOffset = uvOffset + sizeof(uvBuffer);
+float16 normalBuffer[vertexCount * 8] @ normalOffset;
+
+// face indices
+u32 faceCount = cornerCount / 3;
+u32 idxbufOffset = normalOffset + sizeof(normalBuffer);
 u16 indexBuffer[faceCount * 3] @ idxbufOffset;
 
-
 std::print("faceCount: {}", faceCount);
+std::print("cornerCount{}", cornerCount);
 std::print("pointCount: {}", pointCount);
-std::print("sharedVertexCount: {}", sharedVertexCount);
-std::print("totalVertexCount: {}", totalVertexCount);
+std::print("vertexCount{}", vertexCount);
 ```
