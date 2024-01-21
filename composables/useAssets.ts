@@ -1,7 +1,7 @@
 // @ts-ignore
 import { decompressBlock } from 'lz4js'
 import { ZipReader, type Entry, BlobReader, BlobWriter } from '@zip.js/zip.js'
-import { BufferGeometry, Float32BufferAttribute, Line, LineBasicMaterial, Mesh, MeshBasicMaterial, MeshStandardMaterial, MeshStandardMaterialParameters, Points, PointsMaterial, TextureLoader } from 'three'
+import { BufferGeometry, Float32BufferAttribute, Line, LineBasicMaterial, Mesh, MeshBasicMaterial, MeshStandardMaterial, MeshStandardMaterialParameters, ObjectSpaceNormalMap, Points, PointsMaterial, TangentSpaceNormalMap, TextureLoader } from 'three'
 import { fileDrop } from '~/lib/file-drop'
 import { ktxImage } from '~/lib/ktx/ktx'
 import { useTexgenpack } from '~/lib/texgenpack/texgenpack'
@@ -88,16 +88,23 @@ export default function useAssets () {
 
     const geometry = new BufferGeometry()
 
-    const texture = new TextureLoader().load('/FriendshipStatue.png')
-
+    const textureLoader = new TextureLoader()
+    const texture = textureLoader.load('/FriendshipStatue.png')
+    const bumpMap = textureLoader.load('/FriendshipStatueSh.png')
 
     const options:MeshStandardMaterialParameters = {
-      roughness: 0.20,
-      metalness: 1,
+      roughness: 0.60,
+      metalness: 0.1,
       map: texture,
+      normalMap: bumpMap,
+      normalMapType: TangentSpaceNormalMap,
+      // normalScale: 1,
       color: 'white',
     }
-    // if (cubeRenderTarget) options.envMap = cubeRenderTarget.texture
+    // if (cubeRenderTarget) {
+    //   options.envMap = cubeRenderTarget.texture
+    //   options.envMapIntensity = 1
+    // }
     const material = new MeshStandardMaterial(options)
     // const material = new MeshBasicMaterial(options)
   
@@ -109,12 +116,13 @@ export default function useAssets () {
     // })
     geometry.setAttribute('position', new Float32BufferAttribute(vertexBuffer, 3))
     // geometry.setAttribute('normal', new Float32BufferAttribute(normBuffer, 3))
-    geometry.computeVertexNormals()
+    // geometry.computeVertexNormals()
     // console.log(geometry)
     const mesh = new Mesh(geometry, material)
 
 
-    // /* Point Cloud */
+    /* Point Cloud */
+    /*
     const pointGeo = new BufferGeometry()
     pointGeo.setAttribute('position', new Float32BufferAttribute(uvPoints, 3))
     const pointMat = new PointsMaterial({
@@ -127,6 +135,7 @@ export default function useAssets () {
     // const cloud = new Line(pointGeo, pointMat)
     mesh.add(cloud)
     cloud.position.set(0, 1, 0)
+    */
 
     return mesh
   }
@@ -252,7 +261,7 @@ function parseMesh (view: DataView) {
   for (let i = 0; i < uvCount; i++) {
     rawUV.push([
       getFloat16(view, offset + 0, true),
-      getFloat16(view, offset + 2, true),
+      1-getFloat16(view, offset + 2, true),
       // 0,
       // getFloat16(view, offset + 4, true),
       // getFloat16(view, offset + 6, true),

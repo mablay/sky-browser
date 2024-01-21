@@ -1,5 +1,3 @@
-// initial version: https://github.com/oldmud0/SkyEngineTools/blob/master/imhex/mesh.hexpat
-
 #pragma pattern_limit 1048576
 #pragma array_limit 1048576
 
@@ -16,16 +14,24 @@ struct Vertex {
     padding[4];
 };
 
-struct Vec3 {
-    float x;
-    float y;
-    float z;
-};
-
 struct Uv {
     // Actually half-precision floats
     u16 x;
     u16 y;
+};
+
+struct UvVec {
+    // Actually half-precision floats
+    Uv uv1;
+    Uv uv2;
+    Uv uv3;
+    Uv uv4;
+};
+
+struct Vec3 {
+    float x;
+    float y;
+    float z;
 };
 
 struct Vec2 {
@@ -103,11 +109,11 @@ struct MeshLod {
     }
     
     if (MESH_VERSION < 0x1d || skipUvs == 0) { // or mesh version < 0x1d
-        Uv uvBuffer[sharedVertices];
+        float miscData0[sharedVertices];
     }
 
     if (loadMeshNorms) {
-        Vertex normals[sharedVertices];
+        UvVec uvBuffer[sharedVertices];
     }
 
     if (false) { // if animated
