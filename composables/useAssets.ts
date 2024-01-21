@@ -1,7 +1,7 @@
 // @ts-ignore
 import { decompressBlock } from 'lz4js'
 import { ZipReader, type Entry, BlobReader, BlobWriter } from '@zip.js/zip.js'
-import { BufferGeometry, Float32BufferAttribute, Mesh, MeshStandardMaterial, MeshStandardMaterialParameters } from 'three'
+import { BufferGeometry, Float32BufferAttribute, Mesh, MeshNormalMaterial, MeshStandardMaterial, MeshStandardMaterialParameters } from 'three'
 import { fileDrop } from '~/lib/file-drop'
 import { ktxImage } from '~/lib/ktx/ktx'
 import { useTexgenpack } from '~/lib/texgenpack/texgenpack'
@@ -90,10 +90,11 @@ export default function useAssets () {
 
     const options:MeshStandardMaterialParameters = {
       roughness: 0.20,
-      metalness: 1
+      metalness: 1,
     }
-    if (cubeRenderTarget) options.envMap = cubeRenderTarget.texture
+    // if (cubeRenderTarget) options.envMap = cubeRenderTarget.texture
     const material = new MeshStandardMaterial(options)
+    // const material = new MeshNormalMaterial(options)
   
     geometry.setIndex(indexBuffer)
     console.log({
@@ -101,9 +102,9 @@ export default function useAssets () {
       vertices: vertexBuffer.length
     })
     geometry.setAttribute('position', new Float32BufferAttribute(vertexBuffer, 3))
-    // geometry.setAttribute('normal', new Float32BufferAttribute(normBuffer, 3))
+    geometry.setAttribute('normal', new Float32BufferAttribute(normBuffer, 3))
 
-    geometry.computeVertexNormals()
+    // geometry.computeVertexNormals()
     // console.log(geometry)
   
     return new Mesh(geometry, material)
@@ -188,12 +189,12 @@ function parseMesh (view: DataView) {
   const totalVertexCount = view.getUint32(0x78, true)
   const pointCount = view.getUint32(0x80, true)
   const uvCount = view.getUint32(0x74, true)
-  // console.log({
-  //   sharedVertexCount,
-  //   totalVertexCount,
-  //   pointCount,
-  //   uvCount
-  // })
+  console.log({
+    sharedVertexCount,
+    totalVertexCount,
+    pointCount,
+    uvCount
+  })
 
   // build vertex buffer
   const vertexBuffer:number[] = []
@@ -213,7 +214,10 @@ function parseMesh (view: DataView) {
   for (let i = 0; i < uvCount; i++) {
     const u = getFloat16(view, offset + 0, true)
     const v = getFloat16(view, offset + 2, true)
+    // const u = view.getUint16(offset + 0, true)
+    // const v = view.getUint16(offset + 2, true)
     offset += 4
+    uvBuffer.push(u, v)
   }
   // const uvHeaderSize = uvCount * 4
   // offset += uvHeaderSize

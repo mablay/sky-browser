@@ -50,6 +50,15 @@ vertexCount: 7486 (unique vertices)
 cornerCount: 18408 (paritally reused vertices for faces)
 faceCount = cornerCount / 3 = 6136
 
+--- (side note)
+miskData2 ~ 2 * vertexCount
+miskData3 ~ 2 * vertexCount
+miskData7 ~ 2 * faceCount
+
+sb uvBufferOffset:    119955 | 119955
+sb normBufferOffset:  149899 | 149899
+---
+
 ```s
 # Vertex Buffer
 # x,y,z are vertex coordinates (last 32bits are unclear)
@@ -77,3 +86,8 @@ faceCount * [i:u16][j:u16][k:u16]
 - what's the 4th 32bit value in the vertexBuffer
 - what's in the uvHeader?
 - which texture to use?
+
+## Good Reads
+
+* https://www.khronos.org/files/gltf20-reference-guide.pdf
+
