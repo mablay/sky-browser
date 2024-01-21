@@ -1,7 +1,7 @@
 // @ts-ignore
 import { decompressBlock } from 'lz4js'
 import { ZipReader, type Entry, BlobReader, BlobWriter } from '@zip.js/zip.js'
-import { BufferGeometry, Float32BufferAttribute, Mesh, MeshNormalMaterial, MeshStandardMaterial, MeshStandardMaterialParameters } from 'three'
+import { BufferGeometry, Float32BufferAttribute, Line, LineBasicMaterial, Mesh, MeshBasicMaterial, MeshStandardMaterial, MeshStandardMaterialParameters, Points, PointsMaterial, TextureLoader } from 'three'
 import { fileDrop } from '~/lib/file-drop'
 import { ktxImage } from '~/lib/ktx/ktx'
 import { useTexgenpack } from '~/lib/texgenpack/texgenpack'
@@ -84,30 +84,51 @@ export default function useAssets () {
   }
 
   async function loadMesh (entry: Entry, cubeRenderTarget?: THREE.WebGLCubeRenderTarget) {
-    const { indexBuffer, vertexBuffer, normBuffer } = await parseMeshEntry(entry)
+    const { indexBuffer, vertexBuffer, normBuffer, uvPoints, uvBuffer, rawUV } = await parseMeshEntry(entry)
 
     const geometry = new BufferGeometry()
+
+    const texture = new TextureLoader().load('/FriendshipStatue.png')
+
 
     const options:MeshStandardMaterialParameters = {
       roughness: 0.20,
       metalness: 1,
+      map: texture,
+      color: 'white',
     }
     // if (cubeRenderTarget) options.envMap = cubeRenderTarget.texture
     const material = new MeshStandardMaterial(options)
-    // const material = new MeshNormalMaterial(options)
+    // const material = new MeshBasicMaterial(options)
   
     geometry.setIndex(indexBuffer)
-    console.log({
-      indices: indexBuffer.length,
-      vertices: vertexBuffer.length
-    })
+    geometry.setAttribute('uv', new Float32BufferAttribute(rawUV, 2))
+    // console.log({
+    //   indices: indexBuffer.length,
+    //   vertices: vertexBuffer.length
+    // })
     geometry.setAttribute('position', new Float32BufferAttribute(vertexBuffer, 3))
-    geometry.setAttribute('normal', new Float32BufferAttribute(normBuffer, 3))
-
-    // geometry.computeVertexNormals()
+    // geometry.setAttribute('normal', new Float32BufferAttribute(normBuffer, 3))
+    geometry.computeVertexNormals()
     // console.log(geometry)
-  
-    return new Mesh(geometry, material)
+    const mesh = new Mesh(geometry, material)
+
+
+    // /* Point Cloud */
+    const pointGeo = new BufferGeometry()
+    pointGeo.setAttribute('position', new Float32BufferAttribute(uvPoints, 3))
+    const pointMat = new PointsMaterial({
+      color: 0xFF0000,
+      size: 0.02,
+      sizeAttenuation: false
+    })
+    const cloud = new Points(pointGeo, pointMat)
+    // const pointMat = new LineBasicMaterial({ color: '0xFFFFFF', linewidth: 0.1 })
+    // const cloud = new Line(pointGeo, pointMat)
+    mesh.add(cloud)
+    cloud.position.set(0, 1, 0)
+
+    return mesh
   }
 
   async function loadImage (entry: Entry) {
@@ -209,29 +230,59 @@ function parseMesh (view: DataView) {
   }
 
   // build uv buffer
-  console.log('uvBufferOffset:', offset)
-  const uvBuffer:number[] = []
+  // console.log('uvBufferOffset:', offset)
+  const normBuffer:number[] = []
   for (let i = 0; i < uvCount; i++) {
-    const u = getFloat16(view, offset + 0, true)
-    const v = getFloat16(view, offset + 2, true)
-    // const u = view.getUint16(offset + 0, true)
-    // const v = view.getUint16(offset + 2, true)
+    // const u = getFloat16(view, offset + 0, true)
+    // const v = getFloat16(view, offset + 2, true)
+    const u = view.getUint16(offset + 0, false)
+    const v = view.getUint16(offset + 2, false)
     offset += 4
-    uvBuffer.push(u, v)
+    normBuffer.push(u, v, 0)
   }
+  // console.log('uvBuffer:', uvBuffer)
   // const uvHeaderSize = uvCount * 4
   // offset += uvHeaderSize
 
   // build norm buffer
-  console.log('normBufferOffset:', offset)
-  const normBuffer:number[] = []
+  // console.log('normBufferOffset:', offset)
+  const rawUV:number[][] = []
+  const uvPoints: number[] = []
+  // const normBuffer:number[] = []
   for (let i = 0; i < uvCount; i++) {
-    const x = view.getFloat32(offset + 4, true)
-    const y = view.getFloat32(offset + 8, true)
-    const z = view.getFloat32(offset + 12, true)
+    rawUV.push([
+      getFloat16(view, offset + 0, true),
+      getFloat16(view, offset + 2, true),
+      // 0,
+      // getFloat16(view, offset + 4, true),
+      // getFloat16(view, offset + 6, true),
+      // // 0,
+      // getFloat16(view, offset + 8, true),
+      // getFloat16(view, offset + 10, true),
+      // // 0,
+      // getFloat16(view, offset + 12, true),
+      // getFloat16(view, offset + 14, true),
+      // // 0,
+    ])
+
+    uvPoints.push(
+      getFloat16(view, offset + 0, true),
+      -getFloat16(view, offset + 2, true),
+      0, // -1.5,
+      1 + getFloat16(view, offset + 4, true),
+      -getFloat16(view, offset + 6, true),
+      -1, // -1.5,
+      -1 + getFloat16(view, offset + 8, true),
+      -getFloat16(view, offset + 10, true),
+      -2, // -1.5,
+      -2 + getFloat16(view, offset + 12, true),
+      -getFloat16(view, offset + 14, true),
+      -3, // -1.5,
+    )
+    // let z = view.getFloat32(offset + 8, true)
+    const z = 0
     // unknown 4th component
     offset += 16
-    normBuffer.push(x, y, z)
   }
 
   // build index buffer
@@ -244,6 +295,17 @@ function parseMesh (view: DataView) {
     offset += 6
     indexBuffer.push(v1, v2, v3)
   }
+
+  const uvBuffer = indexBuffer.flatMap(i => rawUV[i])
+  console.log('UV::', {
+    uvCount,
+    indexBufferLen: indexBuffer.length,
+    rawUVLen: rawUV.length,
+    uvBufferLen: uvBuffer.length,
+    max: Math.max(...indexBuffer),
+    min: Math.min(...indexBuffer),
+  })
+  // const normBuffer = rawUV
 
   // console.log({
   //   vertexBuffer,
@@ -258,6 +320,8 @@ function parseMesh (view: DataView) {
     vertexBuffer,
     indexBuffer,
     normBuffer,
-    uvBuffer
+    uvBuffer,
+    uvPoints,
+    rawUV: rawUV.flat()
   }  
 }
