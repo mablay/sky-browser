@@ -19,3 +19,4 @@ public/apk
 lib/cpp
 lib/texgenpack/a.out.js
 lib/texgenpack/a.out.wasm
+public/*.png
