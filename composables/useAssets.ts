@@ -89,8 +89,8 @@ export default function useAssets () {
     const geometry = new BufferGeometry()
 
     const textureLoader = new TextureLoader()
-    const texture = textureLoader.load('/FriendshipStatue.png')
-    const bumpMap = textureLoader.load('/FriendshipStatueSh.png')
+    const texture = await textureLoader.loadAsync('/FriendshipStatue.png')
+    const bumpMap = await textureLoader.loadAsync('/FriendshipStatueSh.png')
 
     const options:MeshStandardMaterialParameters = {
       roughness: 0.60,
