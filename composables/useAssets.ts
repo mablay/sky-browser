@@ -1,7 +1,7 @@
 // @ts-ignore
 import { decompressBlock } from 'lz4js'
 import { ZipReader, type Entry, BlobReader, BlobWriter } from '@zip.js/zip.js'
-import { BufferGeometry, Float32BufferAttribute, Line, LineBasicMaterial, Mesh, MeshBasicMaterial, MeshStandardMaterial, MeshStandardMaterialParameters, ObjectSpaceNormalMap, Points, PointsMaterial, TangentSpaceNormalMap, TextureLoader } from 'three'
+import { BufferGeometry, Float32BufferAttribute, Line, LineBasicMaterial, Mesh, MeshBasicMaterial, MeshStandardMaterial, MeshStandardMaterialParameters, ObjectSpaceNormalMap, Points, PointsMaterial, TangentSpaceNormalMap, TextureLoader, Vector2 } from 'three'
 import { fileDrop } from '~/lib/file-drop'
 import { ktxImage } from '~/lib/ktx/ktx'
 import { useTexgenpack } from '~/lib/texgenpack/texgenpack'
@@ -84,21 +84,21 @@ export default function useAssets () {
   }
 
   async function loadMesh (entry: Entry, cubeRenderTarget?: THREE.WebGLCubeRenderTarget) {
-    const { indexBuffer, vertexBuffer, normBuffer, uvPoints, uvBuffer, rawUV } = await parseMeshEntry(entry)
+    const { indexBuffer, vertexBuffer, normBuffer, uvPoints, rawUV } = await parseMeshEntry(entry)
 
     const geometry = new BufferGeometry()
 
     const textureLoader = new TextureLoader()
-    const texture = await textureLoader.loadAsync('/FriendshipStatue.png')
-    const bumpMap = await textureLoader.loadAsync('/FriendshipStatueSh.png')
+    const diffuseMap = await textureLoader.loadAsync('/FriendshipStatue.png')
+    const normalMap = await textureLoader.loadAsync('/FriendshipStatueSh.png')
 
     const options:MeshStandardMaterialParameters = {
       roughness: 0.60,
       metalness: 0.1,
-      map: texture,
-      normalMap: bumpMap,
+      map: diffuseMap,
+      normalMap,
       normalMapType: TangentSpaceNormalMap,
-      // normalScale: 1,
+      // normalScale: new Vector2(1, 1),
       color: 'white',
     }
     // if (cubeRenderTarget) {
@@ -115,8 +115,8 @@ export default function useAssets () {
     //   vertices: vertexBuffer.length
     // })
     geometry.setAttribute('position', new Float32BufferAttribute(vertexBuffer, 3))
-    // geometry.setAttribute('normal', new Float32BufferAttribute(normBuffer, 3))
-    // geometry.computeVertexNormals()
+    geometry.setAttribute('normal', new Float32BufferAttribute(normBuffer, 3))
+    geometry.computeVertexNormals()
     // console.log(geometry)
     const mesh = new Mesh(geometry, material)
 
@@ -127,8 +127,8 @@ export default function useAssets () {
     pointGeo.setAttribute('position', new Float32BufferAttribute(uvPoints, 3))
     const pointMat = new PointsMaterial({
       color: 0xFF0000,
-      size: 0.02,
-      sizeAttenuation: false
+      size: 0.1,
+      sizeAttenuation: true
     })
     const cloud = new Points(pointGeo, pointMat)
     // const pointMat = new LineBasicMaterial({ color: '0xFFFFFF', linewidth: 0.1 })
@@ -242,12 +242,12 @@ function parseMesh (view: DataView) {
   // console.log('uvBufferOffset:', offset)
   const normBuffer:number[] = []
   for (let i = 0; i < uvCount; i++) {
-    // const u = getFloat16(view, offset + 0, true)
-    // const v = getFloat16(view, offset + 2, true)
-    const u = view.getUint16(offset + 0, false)
-    const v = view.getUint16(offset + 2, false)
+    const u1 = getFloat16(view, offset + 0, true)
+    const v1 = getFloat16(view, offset + 2, true)
+    const u2 = view.getUint16(offset + 0, false)
+    const v2 = view.getUint16(offset + 2, false)
     offset += 4
-    normBuffer.push(u, v, 0)
+    normBuffer.push(u2, v1, 0)
   }
   // console.log('uvBuffer:', uvBuffer)
   // const uvHeaderSize = uvCount * 4
@@ -305,12 +305,12 @@ function parseMesh (view: DataView) {
     indexBuffer.push(v1, v2, v3)
   }
 
-  const uvBuffer = indexBuffer.flatMap(i => rawUV[i])
+  // const uvBuffer = indexBuffer.flatMap(i => rawUV[i])
   console.log('UV::', {
     uvCount,
     indexBufferLen: indexBuffer.length,
     rawUVLen: rawUV.length,
-    uvBufferLen: uvBuffer.length,
+    // uvBufferLen: uvBuffer.length,
     max: Math.max(...indexBuffer),
     min: Math.min(...indexBuffer),
   })
@@ -329,7 +329,7 @@ function parseMesh (view: DataView) {
     vertexBuffer,
     indexBuffer,
     normBuffer,
-    uvBuffer,
+    // uvBuffer,
     uvPoints,
     rawUV: rawUV.flat()
   }  
