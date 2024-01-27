@@ -84,7 +84,7 @@ export default function useAssets () {
   }
 
   async function loadMesh (entry: Entry, cubeRenderTarget?: THREE.WebGLCubeRenderTarget) {
-    const { indexBuffer, vertexBuffer, normBuffer, uvPoints, rawUV } = await parseMeshEntry(entry)
+    const { indexBuffer, vertexBuffer, normBuffer, faceCount, rawUV } = await parseMeshEntry(entry)
 
     const geometry = new BufferGeometry()
 
@@ -93,29 +93,31 @@ export default function useAssets () {
     const normalMap = await textureLoader.loadAsync('/FriendshipStatueSh.png')
 
     const options:MeshStandardMaterialParameters = {
-      roughness: 0.60,
-      metalness: 0.1,
-      map: diffuseMap,
-      normalMap,
-      normalMapType: TangentSpaceNormalMap,
+      roughness: 0.10,
+      metalness: 0.9,
+      // map: diffuseMap,
+      // normalMap,
+      // normalMapType: TangentSpaceNormalMap,
       // normalScale: new Vector2(1, 1),
       color: 'white',
     }
-    // if (cubeRenderTarget) {
-    //   options.envMap = cubeRenderTarget.texture
-    //   options.envMapIntensity = 1
-    // }
+    if (cubeRenderTarget) {
+      options.envMap = cubeRenderTarget.texture
+      options.envMapIntensity = 1
+    }
     const material = new MeshStandardMaterial(options)
     // const material = new MeshBasicMaterial(options)
   
     geometry.setIndex(indexBuffer)
+    // geometry.setIndex(indexBuffer.slice(5, 5 + faceCount * 3))
+
     geometry.setAttribute('uv', new Float32BufferAttribute(rawUV, 2))
     // console.log({
     //   indices: indexBuffer.length,
     //   vertices: vertexBuffer.length
     // })
     geometry.setAttribute('position', new Float32BufferAttribute(vertexBuffer, 3))
-    geometry.setAttribute('normal', new Float32BufferAttribute(normBuffer, 3))
+    // geometry.setAttribute('normal', new Float32BufferAttribute(normBuffer, 3))
     geometry.computeVertexNormals()
     // console.log(geometry)
     const mesh = new Mesh(geometry, material)
@@ -215,13 +217,13 @@ async function parseMeshEntry (entry: Entry) {
 
 function parseMesh (view: DataView) {
   // read params from decompressed buffer
-  const sharedVertexCount = view.getUint32(0x74, true)
-  const totalVertexCount = view.getUint32(0x78, true)
-  const pointCount = view.getUint32(0x80, true)
+  const vertexCount = view.getUint32(0x74, true)
+  const cornerCount = view.getUint32(0x78, true)
+  const pointCount = view.getUint32(0x80, true) // purpose?
   const uvCount = view.getUint32(0x74, true)
   console.log({
-    sharedVertexCount,
-    totalVertexCount,
+    vertexCount,
+    cornerCount,
     pointCount,
     uvCount
   })
@@ -229,7 +231,7 @@ function parseMesh (view: DataView) {
   // build vertex buffer
   const vertexBuffer:number[] = []
   let offset = 0xb3
-  for (let i = 0; i < sharedVertexCount; i++) {
+  for (let i = 0; i < vertexCount; i++) {
     // little endian
     const x = view.getFloat32(offset + 0, true)
     const y = view.getFloat32(offset + 4, true)
@@ -296,7 +298,9 @@ function parseMesh (view: DataView) {
 
   // build index buffer
   const indexBuffer: number[] = []
-  const faceCount = Math.floor(totalVertexCount / 3)
+  const faceCount = Math.floor(cornerCount / 3)
+  // offset += faceCount * 6 - 1676 // 0x10887
+  const indexBufferStart = offset.toString(16) // view.buffer.slice(offset, offset + 20) // 0x108A1
   for (let i = 0; i < faceCount; i++) {
     const v1 = view.getUint16(offset + 0, true)
     const v2 = view.getUint16(offset + 2, true)
@@ -309,6 +313,7 @@ function parseMesh (view: DataView) {
   console.log('UV::', {
     uvCount,
     indexBufferLen: indexBuffer.length,
+    indexBufferStart,
     rawUVLen: rawUV.length,
     // uvBufferLen: uvBuffer.length,
     max: Math.max(...indexBuffer),
@@ -322,8 +327,9 @@ function parseMesh (view: DataView) {
   // })
 
   return {
-    sharedVertexCount,
-    totalVertexCount,
+    vertexCount,
+    cornerCount,
+    faceCount,
     pointCount,
     uvCount,
     vertexBuffer,

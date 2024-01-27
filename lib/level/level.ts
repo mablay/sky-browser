@@ -7,6 +7,7 @@ export async function readLevel (path: string) {
   const header = file.subarray(0, 4).toString()
   const version = view.getUint32(4, true)
   const namesOffset = view.getUint32(0x20, true)
+  const bstOffset = view.getUint32(0x24, true)
   // const autoClumpOffset = 
   
   const floats: number[] = []
@@ -28,10 +29,12 @@ export async function readLevel (path: string) {
   offset += 4
   const nodes: any[] = []
 
-  for (let i = 0; i < 100; i++) {
+  // const bstCount = 4996
+  const bstCount = 499
+  for (let i = 0; i < bstCount; i++) {
     const node = readBstNode(file, offset)
     if (node === undefined) break
-    offset = node.offset + 1
+    offset = node.offset + node.bytes.byteLength + 4
     nodes.push(node)
   }
   // const bst = readString(file, offset)
@@ -44,11 +47,20 @@ export async function readLevel (path: string) {
     namesOffset,
     names: [names[0], '...', names[names.length - 1]].join(' '),
     namesCount: names.length,
+    bstOffset: [bstOffset, toHex(bstOffset)].join(' ')
   })
-  nodes.sort((a, b) => a.type - b.type)
+  // nodes.sort((a, b) => a.type - b.type)
+  nodes.sort((a, b) => b.id - a.id)
   for (const node of nodes) {
-    if (node.type !== 9) continue
-    console.log(node.offset, node.name.padEnd(20), node.type, node.bytes.subarray(-35))
+    // if (node.type !== 9) continue
+    const len = toHex(node.length, true, 2)
+    console.log(
+      toHex(node.offset, true, 3),
+      node.name.padEnd(20),
+      ''.padStart(2 - node.type.toString().length), node.type,
+      len,
+      ''.padStart(3 - node.length.toString().length), node.length,
+      node.bytes.subarray(0, 35))
   }
 }
 
@@ -63,16 +75,43 @@ function readString (buffer: Buffer, offset: number) {
 }
 
 function readBstNode (buffer: Buffer, offset: number) {
-  const index = buffer.indexOf('BstNode_', offset + 4)
+  const index = buffer.indexOf('BstNode_', offset)
   if (index < 0) return
   const type = buffer.readUInt32LE(index - 4)
   const bstName = readString(buffer, index)
   const next = buffer.indexOf('BstNode_', index + 1)
   if (next < 0) throw new Error('NYI proper BstNode parser!')
   return {
-    type,
-    name: bstName.string,
-    offset: index - 4,
-    bytes: buffer.subarray(index + bstName.byteLength, next - 4)
+    type, // 4 byts
+    name: bstName.string, // zero terminated string
+    id: parseInt(bstName.string.substring(8)),
+    offset: index - 4, // offset including the type
+    length: next - index,
+    bytes: buffer.subarray(index + bstName.byteLength, next - 4) // excluding type and name
+  }
+}
+
+function toHex0x (n: number, littleEndian = true, pad?: number) {
+  return `0x${toHex(n, littleEndian, pad)}`
+}
+
+function toHex (n: number, littleEndian = true, pad?: number) {
+  const chunks:number[] = []
+  let i = 10
+  while (n > 0) {
+    chunks.push(n % 256)
+    n = n >> 8
+    if (i-- < 0)break
+  }
+  if (littleEndian === false) {
+    if (pad) {
+      return Buffer.from(chunks.reverse()).toString('hex').padEnd(pad * 2, '0')  
+    }
+    return Buffer.from(chunks.reverse()).toString('hex')
+  } else {
+    if (pad) {
+      return Buffer.from(chunks).toString('hex').padStart(pad * 2, '0')  
+    }
+    return Buffer.from(chunks).toString('hex')
   }
 }
