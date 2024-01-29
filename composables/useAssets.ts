@@ -93,8 +93,8 @@ export default function useAssets () {
     const normalMap = await textureLoader.loadAsync('/FriendshipStatueSh.png')
 
     const options:MeshStandardMaterialParameters = {
-      roughness: 0.10,
-      metalness: 0.9,
+      roughness: 0.20,
+      metalness: 1.0,
       // map: diffuseMap,
       // normalMap,
       // normalMapType: TangentSpaceNormalMap,

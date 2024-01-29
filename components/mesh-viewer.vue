@@ -55,8 +55,9 @@ onMounted(() => {
   //   // renderer.setAnimationLoop(render)
   // })
 
+  console.log('baseURL:', config.app.baseURL)
   // equirectangular HDR image from https://polyhaven.com/a/kloofendal_48d_partly_cloudy_puresky
-  new RGBELoader().setPath(config.baseURL).load('kloofendal_48d_partly_cloudy_puresky_1k.hdr', function ( texture ) {
+  new RGBELoader().setPath(config.app.baseURL).load('kloofendal_48d_partly_cloudy_puresky_1k.hdr', function ( texture ) {
     texture.mapping = EquirectangularReflectionMapping
     scene.background = texture;
     scene.environment = texture;

@@ -1,5 +1,6 @@
 {
   "name": "sky-browser",
+  "version": "0.1.0",
   "description": "Asset explorer for Sky - children of the light",
   "private": true,
   "scripts": {
@@ -16,14 +17,20 @@
     "@types/three": "^0.152.1",
     "@vueuse/core": "^10.1.2",
     "@vueuse/nuxt": "^10.1.2",
-    "nuxt": "^3.6.1"
+    "nuxt": "^3.9.3"
   },
   "dependencies": {
     "@petamoriken/float16": "^3.8.4",
+    "@pinia/nuxt": "^0.5.1",
     "@zip.js/zip.js": "^2.7.16",
+    "idb-keyval": "^6.2.1",
     "leather": "^3.0.3",
     "lz4js": "^0.2.0",
+    "pinia": "^2.1.7",
     "three": "^0.153.0",
     "three-perspective": "^1.0.0"
+  },
+  "overrides": {
+    "vue": "latest"
   }
 }

@@ -13,5 +13,5 @@ export default defineNuxtConfig({
       link: [{ rel: 'icon', type: 'image/x-icon', href: '/sky-browser/favicon.ico' }]
     }
   },
-  modules: ['@vueuse/nuxt']
+  modules: ['@vueuse/nuxt', '@pinia/nuxt']
 })
