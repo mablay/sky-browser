@@ -1,19 +1,22 @@
 import { apkFromFile, apkFromIdb, clearCache, type APK, fileHash, getApkId } from "~/lib/apk/apk-cache"
 
 export const useApkStore = defineStore('apkStore', () => {
+  /**
+   * indicates that the store requires data
+   * unavailable in the cache and the user
+   * is supposed to drop the according file
+   * to provide data.  
+   * 
+   * Typical use cases:  
+   *  - Empty cache  
+   *  - User wants to access a particular uncached resource
+   */
+  const fileDropRequired = ref(false)
   /** id of the currently used APK */
   const fileId = ref(getApkId())
   const apk = ref<APK>({})
   /** indicating the presence of a dropped APK file */
   const usingFile = ref(false)
-
-  apkFromIdb().then(value => apk.value = value)
-
-  async function open (file: File) {
-    apk.value = await apkFromFile(file, apk.value)
-    usingFile.value = true
-    fileId.value = fileHash(file)
-  }
 
   const files = computed(() => Object.keys(apk.value))
   const availableFiles = computed(() => {
@@ -23,7 +26,20 @@ export const useApkStore = defineStore('apkStore', () => {
       .map(entry => entry.filename)
   })
 
+  apkFromIdb().then(value => {
+    apk.value = value
+    fileDropRequired.value = (availableFiles.value.length === 0)
+  })
+
+  async function open (file: File) {
+    fileDropRequired.value = false
+    apk.value = await apkFromFile(file, apk.value)
+    usingFile.value = true
+    fileId.value = fileHash(file)
+  }
+
   return {
+    fileDropRequired,
     fileId,
     apk,
     files,

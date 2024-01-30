@@ -1,7 +1,9 @@
 <template>
-  <div class="page">
-    <div ref="dropZoneRef" class="dropZone" :class="dropAcceptance">
-      <span class="dropText">{{ dropText }}</span>
+  <div v-show="showState" class="overlay">
+    <div class="page">
+      <div ref="dropZoneRef" class="dropZone" :class="dropAcceptance">
+        <span class="dropText">{{ dropText }}</span>
+      </div>
     </div>
   </div>
 </template>
@@ -14,26 +16,59 @@ const emit = defineEmits<{
 }>()
 
 export interface DropOverlayProps {
+  /** optional mime type of acceptable files.
+   * Use `accept` and `reject` props to show validation response text */
   type?: string
+  /** file drop indicator text */
+  prompt: string
+  /** file drop acceptable indicator text */
+  accept: string
+  /** file drop rejected indicator text */
+  reject: string
+  /**
+   * controls when to show this overlay.  
+   * hide: Prevents the overlay from being displayed.
+   * show: Forces the overlay to be displayed.
+   * auto: The overlay will be displayed while a file is dragged across the window. (default)
+   */
+  show: 'hide' | 'auto' | 'show'
 }
-const props = withDefaults(defineProps<DropOverlayProps>(), {})
+const props = withDefaults(defineProps<DropOverlayProps>(), {
+  prompt: 'Drop File',
+  accept: 'OK',
+  reject: 'Invalid!',
+  show: 'auto'
+})
 
+/* --- refs --- */
 const dropZoneRef = ref<HTMLDivElement>()
+const dropAcceptance = ref<'dropWait'|'dropAccept'|'dropDeny'>('dropWait')
+/** tracks if the overlay should be shown if `props.show = auto` */
+const autoShow = ref(false)
+
+/* --- computed --- */
+const dropText = computed(() => {
+  if (dropAcceptance.value === 'dropWait') return props.prompt
+  if (dropAcceptance.value === 'dropAccept') return props.accept
+  return props.reject
+})
+
+/* --- functions --- */
+useEventListener(document, 'dragenter', () => autoShow.value = true)
+const showState = computed(() => {
+  if (props.show === 'hide') return false
+  if (props.show === 'show') return true
+  return autoShow.value
+})
 
 async function onDrop(files: File[] | null) {
+  autoShow.value = false
   dropAcceptance.value = 'dropWait'
   if (files === null) return
   if (!checkDropAcceptance(files.map(file => file.type))) return
   const file = files[0]
   emit('file', file)
 }
-
-const dropAcceptance = ref<'dropWait'|'dropAccept'|'dropDeny'>('dropWait')
-const dropText = computed(() => {
-  if (dropAcceptance.value === 'dropWait') return 'Drop APK here!'
-  if (dropAcceptance.value === 'dropAccept') return '✅'
-  return 'Not an APK! ❌'
-})
 
 useDropZone(dropZoneRef, {
   onDrop,
@@ -57,6 +92,16 @@ function checkDropAcceptance (files: readonly string[]) {
 </script>
 
 <style scoped>
+.overlay {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #87ceeb;
+  opacity: 0.8;
+  overflow: hidden;
+}
 .page {
   height: 100vh;
   width: 100vw;
