@@ -1,3 +1,4 @@
+import vuetify from 'vite-plugin-vuetify'
 import wasm from 'vite-plugin-wasm'
 
 const baseURL = process.env.NODE_ENV === 'production' ? '/sky-browser/' : '/'
@@ -19,5 +20,17 @@ export default defineNuxtConfig({
   vite: {
     plugins: [wasm()],
   },
-  modules: ['@vueuse/nuxt', '@pinia/nuxt']
+  modules: [
+    '@vueuse/nuxt',
+    '@pinia/nuxt',
+    (_options, nuxt) => {
+      nuxt.hooks.hook('vite:extendConfig', (config) => {
+        if (config.plugins === undefined) throw new Error('Missing config.plugins!')
+        config.plugins.push(vuetify({ autoImport: true }))
+      })
+    }
+  ],
+  build: {
+    transpile: ['vuetify'],
+  },
 })

@@ -14,6 +14,10 @@ export const useApkStore = defineStore('apkStore', () => {
   const fileDropRequired = ref(false)
   /** id of the currently used APK */
   const fileId = ref(getApkId())
+  const filename = computed (() => {
+    if (!fileId) return 'no file'
+    return fileId.value.split(':').shift()
+  })  
   const apk = ref<APK>({})
   /** indicating the presence of a dropped APK file */
   const usingFile = ref(false)
@@ -41,6 +45,7 @@ export const useApkStore = defineStore('apkStore', () => {
   return {
     fileDropRequired,
     fileId,
+    filename,
     apk,
     files,
     availableFiles,

@@ -40,19 +40,20 @@ const dropText = computed(() => {
 
 /* --- functions --- */
 async function onDrop(files: File[] | null) {
+  console.log('[onDrop] emit:drop', true)
   emit('drop', true)
   dropZoneRef.value?.slot
   dropAcceptance.value = 'dropWait'
   if (files === null) return
   if (!checkDropAcceptance(files.map(file => file.type))) return
   const file = files[0]
+  console.log('[onDrop] emit:file', file)
   emit('file', file)
 }
 
 useDropZone(dropZoneRef, {
   onDrop,
   dataTypes (files) {
-    // console.log('dataTypes:', files)
     if (checkDropAcceptance(files)) {
       dropAcceptance.value = 'dropAccept'
       return true
