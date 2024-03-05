@@ -6,18 +6,38 @@
 import { Perspective } from 'three-perspective'
 import { ACESFilmicToneMapping, EquirectangularReflectionMapping, Group, Sphere } from 'three'
 import { meshExampleScene } from '~/lib/mesh/mesh-scene'
-import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader'
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
+import { useMeshStore } from '~/store/mesh-store.js'
 
 const config = useRuntimeConfig()
 
 const perspective = ref<InstanceType<typeof Perspective>>()
 
-const { loadMesh, selectedMeshAsset, meshes, meshName } = useAssets()
+const meshStore = useMeshStore()
+// const { loadMesh, selectedMeshAsset, meshes, meshName } = useAssets()
 
 const { scene, cubeCamera, cubeRenderTarget } = meshExampleScene()
 const group = new Group()
 scene.add(group)
 
+watch(() => meshStore.mesh, async () => {
+  const mesh = toRaw(meshStore.mesh)
+  if (!mesh) return
+  mesh.geometry.computeBoundingSphere()
+  const { center, radius } = <Sphere>mesh.geometry.boundingSphere
+  mesh.geometry.translate(-center.x, -center.y, -center.z)
+  mesh.scale.divideScalar(radius / 5)
+  console.log('loaded mesh:', meshStore.meshName, { center, radius, mesh })
+  group.clear()
+  group.add(mesh)
+  // @ts-ignore
+  const { renderer, render } = perspective.value ?? {}
+  if (!renderer || !render) return
+  cubeCamera.update(renderer, scene )
+  render()
+}, { immediate: true })
+
+/*
 watch([meshes, meshName], async () => {
   const asset = toRaw(selectedMeshAsset.value)
   if (!asset) return
@@ -39,6 +59,7 @@ watch([meshes, meshName], async () => {
   render()
   
 }, { immediate: true })
+*/
 
 onMounted(() => {
   // @ts-ignore

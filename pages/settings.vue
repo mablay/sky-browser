@@ -8,17 +8,21 @@
           <th>Datatype</th>
           <th>Total Files</th>
           <th>Total Size</th>
-          <th>Cached Files</th>
-          <th>Cached Size</th>
+          <th>Available Files</th>
+          <th>Available Size</th>
+          <th>Action</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td>Meshes</td>
+          <td><nuxt-link to="/mesh">Meshes</nuxt-link></td>
           <td>{{ meshes.length }}</td>
           <td>{{ Math.round(meshes.reduce((sum, cur) => sum + cur.size, 0) / 1e6) }} Mb</td>
           <td>{{ meshes.filter(f => f.cached).length }}</td>
           <td>{{ Math.round(meshes.filter(f => f.cached).reduce((sum, cur) => sum + cur.size, 0) / 1e6) }} Mb</td>
+          <td>
+            <v-btn v-if="apk.hasFile" icon="mdi-content-save" @click="() => cache('meshes')" />
+          </td>
         </tr>
         <tr>
           <td>Textures</td>
@@ -46,6 +50,15 @@ const apk = useApkStore()
 const meshes = computed(() => Object.values(apk.apk).filter(f => f.filename.endsWith('.mesh')))
 const textures = computed(() => Object.values(apk.apk).filter(f => f.filename.endsWith('.ktx')))
 const audio = computed(() => Object.values(apk.apk).filter(f => f.filename.endsWith('.bank')))
+
+async function cache (type: 'meshes' | 'textures' | 'audio') {
+  if (type === 'meshes') {
+    for (const entry of meshes.value) {
+      if (entry.cached) continue
+      await entry.getData()
+    }
+  }
+}
 </script>
 
 <style scoped>

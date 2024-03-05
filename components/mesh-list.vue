@@ -17,21 +17,25 @@
           v-show="showList"
           v-for="(name, index) of data"
           :id="`mesh-${index}`"
-          @click="meshName = name"
-          :class="{active: name === meshName}"
-        >{{ name }}</div>
+          @click="() => meshStore.selectMesh(name)"
+          :class="{active: name === meshStore.meshName}"
+        >{{ name.split('/').pop()?.split('.mesh').shift() }}</div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Scene } from 'three';
-import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter'
+import { Mesh, Scene } from 'three'
+import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js'
 import downloadSvg from '~/assets/download.svg'
+import { useMeshStore } from '~/store/mesh-store'
+
+const meshStore = useMeshStore()
+const data = computed(() => meshStore.meshes.map(asset => asset.filename))
 
 const emit = defineEmits(['update:modelValue'])
-const { loadMesh, selectedMeshAsset, meshes, meshName } = useAssets()
+// const { loadMesh, selectedMeshAsset, meshes, meshName } = useAssets()
 
 const showList = ref(true)
 const toggleTitle = computed(() => showList.value ? 'Hide list' : 'Show list')
@@ -40,11 +44,7 @@ function toggleList () {
   showList.value = !showList.value
 }
 
-// function selectMesh (name: string) {
-//    meshes.value.find(asset => asset.name === name)
-
-// }
-
+/*
 onKeyStroke('ArrowDown', (e) => {
   e.preventDefault()
   if (!data.value) return
@@ -64,16 +64,18 @@ onKeyStroke('ArrowUp', (e) => {
   meshName.value = data.value[i - 1]
   document.getElementById(`mesh-${i}`)?.scrollIntoView({ block: 'center' })
 })
+*/
 
-const data = computed(() => meshes.value.map(asset => asset.name))
 // const { data } = useFetch('/api/meshes')
 
+// @TODO: externalize "download"
 async function download () {
-  console.log('download', selectedMeshAsset.value)
+  console.log('download', meshStore.meshName)
 
-  const asset = selectedMeshAsset.value
+  const asset = meshStore.mesh
   if (!asset) return
-  const mesh = await loadMesh(asset.entry)
+  // const mesh = await loadMesh(asset.entry)
+  const mesh = meshStore.mesh as Mesh
   const scene = new Scene()
   scene.add(mesh)
   const exporter = new GLTFExporter()

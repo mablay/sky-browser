@@ -1,8 +1,8 @@
 <template>
   <div class="app">
-    <MeshList v-if="meshes.length" v-model="meshName" />
+    <MeshList v-if="meshStore.meshes.length" v-model="meshStore.meshName" />
     <client-only>
-      <MeshViewer :mesh="meshName" />
+      <MeshViewer :mesh="meshStore.meshName" />
     </client-only>
   </div>
   <!-- <div v-if="meshes.length === 0" class="overlay">
@@ -14,7 +14,7 @@
 
 <script setup lang="ts">
 import { useMeshStore } from '~/store/mesh-store'
-const { meshes, meshName } = useMeshStore()
+const meshStore = useMeshStore()
 
 </script>
 

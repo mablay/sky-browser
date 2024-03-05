@@ -22,7 +22,7 @@ export class FileEntry implements CacheEntry {
     const blobWriter = new BlobWriter()
     const blob = await this.entry.getData(blobWriter)
     const buffer = await blob.arrayBuffer()
-    this.cacheFn(this, buffer)
+    await this.cacheFn(this, buffer)
     return buffer
   }
   getDataView () {

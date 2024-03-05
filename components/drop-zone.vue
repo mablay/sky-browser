@@ -19,7 +19,7 @@ export interface DropOverlayProps {
 
 const emit = defineEmits<{
   file: [file: File]
-  drop: [accepted: boolean]
+  // dropx: [accepted: boolean]
 }>()
 const props = withDefaults(defineProps<DropOverlayProps>(), {
   prompt: 'Drop File',
@@ -40,14 +40,11 @@ const dropText = computed(() => {
 
 /* --- functions --- */
 async function onDrop(files: File[] | null) {
-  console.log('[onDrop] emit:drop', true)
-  emit('drop', true)
   dropZoneRef.value?.slot
   dropAcceptance.value = 'dropWait'
   if (files === null) return
   if (!checkDropAcceptance(files.map(file => file.type))) return
   const file = files[0]
-  console.log('[onDrop] emit:file', file)
   emit('file', file)
 }
 

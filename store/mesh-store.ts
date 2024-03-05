@@ -1,24 +1,31 @@
-import type { CacheEntry } from "~/lib/apk/apk-cache"
-import { useApkStore } from "./apk-store"
+import type { CacheEntry } from "~/lib/apk/apk-cache.js"
+import { useApkStore } from "./apk-store.js"
+import type { Mesh } from "three"
 
 export const useMeshStore = defineStore('meshStore', () => {
+  const assets = useAssets()
   const apk = useApkStore()
   const meshName = ref('AP13DuskGate_01')
-  const mesh = ref<string|undefined>()
+  const mesh = ref<Mesh>()
+  const meshes = shallowRef<CacheEntry[]>([])
 
-  const meshes = computed(() => {
+  watch(apk, () => {
     const arr:CacheEntry[] = []
-    for (const entry of Object.values(apk.apk)) {
-      if (!entry.filename.endsWith('.mesh')) continue
-      const filename = entry.filename.split('/').pop()
+    for (const path of apk.files) {
+      if (!path.endsWith('.mesh')) continue
+      const filename = path.split('/').pop()
       if (!filename) continue
-      const name = filename?.substring(0, filename.length - 5)
-      arr.push(entry)
+      const file = apk.apk[path]
+      if (!file) continue
+      // const name = filename?.substring(0, filename.length - 5)
+      arr.push(file)
     }
-    return arr
+    console.log('meshes:', arr.length)
+    meshes.value = arr
   })
 
-  function selectMesh (name: string) {
+  async function selectMesh (name: string) {
+    console.log('select mesh:', name)
     const filename = name.endsWith('.mesh') ? name : name.concat('.mesh')
     const entry = apk.apk[filename]
     if (entry === undefined) {
@@ -26,7 +33,7 @@ export const useMeshStore = defineStore('meshStore', () => {
       return
     }
     meshName.value = filename.slice(0, filename.length - 5)
-    mesh.value = 'foo'
+    mesh.value = await assets.loadMesh(entry)
   }
 
   return { meshes, meshName, mesh, selectMesh }

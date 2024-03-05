@@ -21,6 +21,7 @@ export const useApkStore = defineStore('apkStore', () => {
   const apk = ref<APK>({})
   /** indicating the presence of a dropped APK file */
   const usingFile = ref(false)
+  const hasFile = computed(() => usingFile.value)
 
   const files = computed(() => Object.keys(apk.value))
   const availableFiles = computed(() => {
@@ -49,6 +50,7 @@ export const useApkStore = defineStore('apkStore', () => {
     apk,
     files,
     availableFiles,
+    hasFile,
     clearCache,
     open
   }
