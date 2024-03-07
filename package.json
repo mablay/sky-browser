@@ -13,6 +13,7 @@
     "deploy": "npx gh-pages --dotfiles -d .output/public"
   },
   "devDependencies": {
+    "@types/lz4": "^0.6.4",
     "@types/node": "^18",
     "@types/three": "^0.152.1",
     "@vueuse/core": "^10.8.0",
@@ -29,6 +30,7 @@
     "@zip.js/zip.js": "^2.7.16",
     "idb-keyval": "^6.2.1",
     "leather": "^3.0.3",
+    "lz4": "^0.6.5",
     "lz4js": "^0.2.0",
     "pinia": "^2.1.7",
     "three": "^0.153.0",

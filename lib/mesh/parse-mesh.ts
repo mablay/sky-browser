@@ -4,15 +4,15 @@ Consider everything you read as potentially
 wrong or deprecated. Do not consider it fact.
 However, some of it might be correct. */
 import { decompressBlock } from 'lz4js'
-import { getFloat16 } from '@petamoriken/float16'
+import { createCursor, type Cursor } from '../cursor'
 
-interface SkyMeshFileHeader {
+export interface SkyMeshFileHeader {
   uncompressedSize: number
   compressedSize: number
   numLods: number
 }
 
-interface SkyMesh {
+export interface SkyMesh {
   /** Vertices.
    * The most elementary part of a mesh
    * is the vertex (vertices plural) which is a
@@ -26,9 +26,38 @@ interface SkyMesh {
    * @alias indexBuffer */
   corners: number[]
 
+  /**
+   * A Normal vector explains how light bounces of the
+   * mesh surface at the origin of the vector.
+   * 
+   * TODO: check if sky meshes are using:
+   * * normal vectors (x, y, z) probably 12 - 16 byte
+   * * normal texture uv mapping (x, y) probably 4 - 8 byte
+   */
   normals: number[]
 
+  /**
+   * UV Texture mapping
+   * Each vertex is assigned a 2D position in a texture.
+   * This should occur for each face corner, but the data
+   * ranges indicate that it's happening per vertex, which
+   * is strange.
+   */
   uv: number[]
+}
+
+/**
+ * Defines which features are included in a mesh file.
+ * This information is critical, for a consistent result
+ * since each feature impacts the offset of the next.
+ */
+interface MeshFlags {
+  hasVertices?: boolean
+  hasNormals?: boolean
+  hasUVs?: boolean
+  hasIndex?: boolean
+  hasBones?: boolean
+  hasAnimation?: boolean
 }
 
 export function parseMeshFile (file: DataView) {
@@ -58,7 +87,9 @@ function parseMeshFileSections (file: DataView) {
   /* ------ decompress mesh buffer ------ */
   const compressedBuffer = new Uint8Array(file.buffer.slice(0x56, 0x56 + header.compressedSize))
   const decompressedBuffer = new Uint8Array(header.uncompressedSize)
+  console.time('decompress')
   decompressBlock(compressedBuffer, decompressedBuffer, 0, header.compressedSize, 0)
+  console.timeEnd('decompress')
   /** decompressed mesh file buffer */
   const body = new DataView(decompressedBuffer.buffer)
   return { header, body }
@@ -70,86 +101,92 @@ function parseMeshFileSections (file: DataView) {
  * @see parseMeshFileSections
  * Most of the body data is little endian encoded.
  */
-function parseMeshBody (body: DataView) {
+export function parseMeshBody (body: DataView) {
   const vertexOffset = 0xb3
-  let offset = vertexOffset
   const mesh: Partial<SkyMesh> = {}
-  const debugInfo: any = {}
 
   /* -------------- body info --------------- */
   const vertexCount = body.getUint32(0x74, true)
   const cornerCount = body.getUint32(0x78, true)
 
-  debugInfo.vertexOffset = offset
-  ;[mesh.vertices, offset] = parseVertices(body, offset, vertexCount)
+  const flags: MeshFlags = {
+    hasVertices: true,
+    hasNormals: true,
+    hasUVs: true,
+    hasIndex: true
+  }
+  console.log('flags:', flags)
+  const cursor = createCursor(body, vertexOffset)
+  const logOffset = (tag: string) => console.log(tag.padStart(10), 'offset:', cursor.offset.toString(16).padStart(8, '0'), cursor.offset)
 
-  debugInfo.normalOffset = offset
-  ;[mesh.normals, offset] = parseNormals(body, offset, vertexCount)
+  if (flags.hasVertices) {
+    logOffset('vertex')
+    mesh.vertices = parseVertices(cursor, vertexCount)
+  }
+
+  if (flags.hasNormals) {
+    logOffset('normals') // offset: 20291, length: 10056 !! 20112
+    mesh.normals = parseNormals(cursor, vertexCount)
+  }
+
+  if (flags.hasUVs) {
+    logOffset('uv') // 30347
+    mesh.uv = parseUV(cursor, vertexCount)
+  }
   
-  debugInfo.uvOffset = offset
-  ;[mesh.uv, offset] = parseUV(body, offset, vertexCount)
+  if (flags.hasIndex) {
+    logOffset('index')
+    mesh.corners = parseCorners(cursor, cornerCount)
+  }
 
-  debugInfo.cornerOffset = offset
-  ;[mesh.corners, offset] = parseCorners(body, offset, cornerCount)
-
-  console.log(debugInfo)
   return mesh as SkyMesh
 }
 
-/** According to Blender:
- * 
- * > Vertices. The most elementary part of a mesh
- *   is the vertex (vertices plural) which is a
- *   single point or position in 3D space
- * 
- * NOTE: Seem reliable
- * */
-function parseVertices (body: DataView, offset: number, vertexCount: number): [number[], number] {
+/** NOTE: Seem reliable */
+function parseVertices (cursor: Cursor, vertexCount: number) {
   const vertices:number[] = []
   for (let i = 0; i < vertexCount; i++) {
-    const x = body.getFloat32(offset + 0, true)
-    const y = body.getFloat32(offset + 4, true)
-    const z = body.getFloat32(offset + 8, true)
+    const x = cursor.readFloat32()
+    const y = cursor.readFloat32()
+    const z = cursor.readFloat32()
     // what about:            offset + 12
     // the last 4 bytes have unknown purpose
     vertices.push(x, y, z)
-    offset += 16
+    cursor.skip(4)
   }
-  return [vertices, offset]
+  return vertices
 }
 
-function parseCorners (body: DataView, offset: number, cornerCount: number): [number[], number] {
+/** NOTE: Seems reliable */
+function parseCorners (cursor: Cursor, cornerCount: number) {
   const indexBuffer: number[] = []
   for (let i = 0; i < cornerCount; i++) {
-    const index = body.getUint16(offset, true)
-    indexBuffer.push(index)
-    offset += 2
+    indexBuffer.push(cursor.readUint16())
   }
-  return [indexBuffer, offset]
+  return indexBuffer
 }
 
-function parseNormals (body: DataView, offset: number, vertexCount: number): [number[], number] {
+function parseNormals (cursor: Cursor, vertexCount: number) {
   const normBuffer:number[] = []
   for (let i = 0; i < vertexCount; i++) {
-    const u1 = getFloat16(body, offset + 0, true)
-    const v1 = getFloat16(body, offset + 2, true)
-    const u2 = body.getUint16(offset + 0, false)
-    const v2 = body.getUint16(offset + 2, false)
+    // const u1 = cursor.readFloat16()
+    const v1 = cursor.readFloat16()
+    const u2 = cursor.readUint16()
+    // const v2 = cursor.readUint16()
     normBuffer.push(u2, v1, 0)
-    offset += 4
   }
-  return [normBuffer, offset]
+  return normBuffer
 }
 
-function parseUV (body: DataView, offset: number, vertexCount: number): [number[], number] {
+function parseUV (cursor: Cursor, vertexCount: number) {
   const uvs:number[] = []
   for (let i = 0; i < vertexCount; i++) {
     uvs.push(
-      getFloat16(body, offset + 0, true),
-      1-getFloat16(body, offset + 2, true),
+      cursor.readFloat16(),
+      1-cursor.readFloat16(),
     )
     // skipping 12 bytes! why?
-    offset += 16
+    cursor.skip(12)
   }
-  return [uvs, offset]
+  return uvs
 }
