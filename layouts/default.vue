@@ -1,6 +1,6 @@
 <template>
-  <ApplicationBar />
-  <v-main>
+  <v-main class="no-top">
+    <ApplicationBar />
     <drop-overlay
       ref="overlay"
       :show="apk.fileDropRequired ? 'show' : 'auto'"
@@ -47,4 +47,7 @@ useEventListener(document, 'dragend', (evt) => {
 </script>
 
 <style scoped>
+.no-top {
+  padding-top: 0;
+}
 </style>

@@ -1,6 +1,8 @@
 <template>
-  <v-app-bar :elevation="2" density="compact">
-    <v-app-bar-title>Sky Browser</v-app-bar-title>
+  <v-app-bar :elevation="0" color="#2220" density="compact">
+    <v-app-bar-title class="min100">
+      <v-btn variant="tonal">Hide List</v-btn>
+    </v-app-bar-title>
 
     <v-spacer></v-spacer>
     {{ apk.filename }}
@@ -23,4 +25,8 @@ const apk = useApkStore()
 </script>
 
 <style scoped>
+.min100 {
+  /* min-width: 80px; */
+  flex: 1 0 100px;
+}
 </style>

@@ -11,8 +11,8 @@
         <Icon :icon="downloadSvg" :size="24" />
       </div>
     </div>
-    <div class="mesh-list scroll-x">
-      <div class="scroll-y">
+    <div class="mesh-list scroll-x rtl">
+      <div class="scroll-y ltr">
         <div
           v-show="showList"
           v-for="(name, index) of data"
@@ -103,6 +103,7 @@ async function download () {
   top: 0;
   width: 200px;
   height: 100%;
+  padding-top: 48px;
   padding-left: 0;
   padding-right: 8px;
   background-color: transparent;
@@ -154,7 +155,7 @@ async function download () {
 
 .scroll-y {
   direction: ltr;
-  padding-left: 12px;  
+  /* padding-left: 12px; */
 }
 .scroll-x {
   direction: ltr;
@@ -166,4 +167,10 @@ async function download () {
   color: black;
 }
 
+.rtl {
+  direction: rtl;
+}
+.ltr {
+  direction: ltr;
+}
 </style>

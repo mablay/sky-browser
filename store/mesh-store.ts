@@ -1,6 +1,7 @@
 import type { CacheEntry } from "~/lib/apk/apk-cache.js"
 import { useApkStore } from "./apk-store.js"
 import type { Mesh } from "three"
+import { parseMeshFile } from "~/lib/mesh/parse-mesh.js"
 
 export const useMeshStore = defineStore('meshStore', () => {
   const assets = useAssets()
@@ -33,6 +34,8 @@ export const useMeshStore = defineStore('meshStore', () => {
       return
     }
     meshName.value = filename.slice(0, filename.length - 5)
+    // const view = await entry.getDataView()
+    // return parseMeshFile(view)  
     mesh.value = await assets.loadMesh(entry)
   }
 
