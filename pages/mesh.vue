@@ -1,6 +1,6 @@
 <template>
   <div class="app">
-    <MeshList v-if="meshStore.meshes.length" v-model="meshStore.meshName" />
+    <MeshList v-if="meshStore.meshes.length && uiStore.showSidebar" v-model="meshStore.meshName" />
     <client-only>
       <MeshViewer :mesh="meshStore.meshName" />
     </client-only>
@@ -14,7 +14,9 @@
 
 <script setup lang="ts">
 import { useMeshStore } from '~/store/mesh-store'
+import { useUiStore } from '~/store/ui-store'
 const meshStore = useMeshStore()
+const uiStore = useUiStore()
 
 </script>
 

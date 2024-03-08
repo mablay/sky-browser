@@ -63,7 +63,8 @@ interface MeshFlags extends Record<string, boolean|undefined|number> {
 
 export function parseMeshFile (file: DataView) {
   const { header, body } = parseMeshFileSections(file)
-  console.log('file header:', header)
+  console.clear()
+  console.log('file version:', header.version)
   const skyMesh = parseMeshBody(body, header.version)
   return { header, skyMesh }
 }
@@ -89,9 +90,7 @@ function parseMeshFileSections (file: DataView) {
   /* ------ decompress mesh buffer ------ */
   const compressedBuffer = new Uint8Array(file.buffer.slice(0x56, 0x56 + header.compressedSize))
   const decompressedBuffer = new Uint8Array(header.uncompressedSize)
-  console.time('decompress')
   decompressBlock(compressedBuffer, decompressedBuffer, 0, header.compressedSize, 0)
-  console.timeEnd('decompress')
   /** decompressed mesh file buffer */
   const body = new DataView(decompressedBuffer.buffer)
   return { header, body }

@@ -34,7 +34,7 @@ export const useMeshStore = defineStore('meshStore', () => {
       console.warn(`No mesh for name: ${filename}!`)
       return
     }
-    meshName.value = filename.slice(0, filename.length - 5)
+    meshName.value = filename
     mesh.value = await entry.getDataView()
 
     // const view = await entry.getDataView()

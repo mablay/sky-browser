@@ -25,7 +25,7 @@ scene.add(group)
 watch(() => meshStore.mesh, async () => {
   const view = toRaw(meshStore.mesh) as DataView
   if (!view) return
-  console.log('view:', view)
+  // console.log('view:', view)
   const { header, skyMesh } = parseMeshFile(view)
   console.log({ header, skyMesh })
   const mesh = await createMesh(skyMesh)
@@ -36,7 +36,7 @@ watch(() => meshStore.mesh, async () => {
   const { center, radius } = <Sphere>mesh.geometry.boundingSphere
   mesh.geometry.translate(-center.x, -center.y, -center.z)
   mesh.scale.divideScalar(radius / 5)
-  console.log('loaded mesh:', meshStore.meshName, { center, radius, mesh })
+  console.log('[ThreeJS]', meshStore.meshName.split('/').pop(), { radius, center, mesh })
   group.clear()
   group.add(mesh)
   // @ts-ignore
@@ -45,30 +45,6 @@ watch(() => meshStore.mesh, async () => {
   cubeCamera.update(renderer, scene )
   render()
 }, { immediate: true })
-
-/*
-watch([meshes, meshName], async () => {
-  const asset = toRaw(selectedMeshAsset.value)
-  if (!asset) return
-  console.log('Loading asset from APK:', asset)
-  // const mesh = await loadSkyMesh(props.mesh, cubeRenderTarget)
-  const mesh = await loadMesh(asset.entry, cubeRenderTarget)
-
-  mesh.geometry.computeBoundingSphere()
-  const { center, radius } = <Sphere>mesh.geometry.boundingSphere
-  mesh.geometry.translate(-center.x, -center.y, -center.z)
-  mesh.scale.divideScalar(radius / 5)
-  console.log('loaded mesh:', asset.name, { center, radius, mesh })
-  group.clear()
-  group.add(mesh)
-  // @ts-ignore
-  const { renderer, render } = perspective.value ?? {}
-  if (!renderer || !render) return
-  cubeCamera.update(renderer, scene )
-  render()
-  
-}, { immediate: true })
-*/
 
 onMounted(() => {
   // @ts-ignore

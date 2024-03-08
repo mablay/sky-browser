@@ -7,15 +7,16 @@
       <div @click="toggleList" class="btn">
         {{ toggleTitle }}
       </div>
-      <div @click="download" class="btn btn-icon">
-        <Icon :icon="downloadSvg" :size="24" />
-      </div>
+    </div> -->
+    <!-- <div @click="download" class="btn btn-icon">
+      <Icon :icon="downloadSvg" :size="24" />
     </div> -->
     <div class="mesh-list scroll-x rtl">
       <div class="scroll-y ltr">
         <div
           v-show="showList"
           v-for="(name, index) of data"
+          :key="name"
           :id="`mesh-${index}`"
           @click="() => meshStore.selectMesh(name)"
           :class="{active: name === meshStore.meshName}"
@@ -29,6 +30,8 @@
 import { Mesh, Scene } from 'three'
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js'
 import downloadSvg from '~/assets/download.svg'
+import { parseMeshFile } from '~/lib/mesh/parse-mesh'
+import { createMesh } from '~/lib/mesh/three-mesh'
 import { useMeshStore } from '~/store/mesh-store'
 
 const meshStore = useMeshStore()
@@ -44,54 +47,25 @@ function toggleList () {
   showList.value = !showList.value
 }
 
-/*
-onKeyStroke('ArrowDown', (e) => {
+onKeyStroke('ArrowDown', async (e) => {
   e.preventDefault()
   if (!data.value) return
-  const i = data.value.findIndex(name => name === meshName.value)
+  const i = data.value.findIndex(name => name === meshStore.meshName)
   if (i < 0 || i >= data.value.length - 1) return
   // emit('update:modelValue', data.value[i + 1])
-  meshName.value = data.value[i + 1]
-  document.getElementById(`mesh-${i}`)?.scrollIntoView({ block: 'center' })
+  meshStore.selectMesh(data.value[i + 1])
+  document.getElementById(`mesh-${i+1}`)?.scrollIntoView({ block: 'center' })
 })
 
-onKeyStroke('ArrowUp', (e) => {
+onKeyStroke('ArrowUp', async (e) => {
   e.preventDefault()
   if (!data.value) return
-  const i = data.value.findIndex(name => name === meshName.value)
+  const i = data.value.findIndex(name => name === meshStore.meshName)
   if (i < 1 || i >= data.value.length) return
   // emit('update:modelValue', data.value[i - 1])
-  meshName.value = data.value[i - 1]
-  document.getElementById(`mesh-${i}`)?.scrollIntoView({ block: 'center' })
+  meshStore.selectMesh(data.value[i - 1])
+  document.getElementById(`mesh-${i-1}`)?.scrollIntoView({ block: 'center' })
 })
-*/
-
-// const { data } = useFetch('/api/meshes')
-
-// @TODO: externalize "download"
-async function download () {
-  console.log('download', meshStore.meshName)
-
-  const asset = meshStore.mesh
-  if (!asset) return
-  // const mesh = await loadMesh(asset.entry)
-  const mesh = meshStore.mesh as Mesh
-  const scene = new Scene()
-  scene.add(mesh)
-  const exporter = new GLTFExporter()
-
-  const options = { binary: true }
-
-  exporter.parse(scene, gltf => {
-    console.log('download GLTF:', gltf)
-    const a = document.createElement('a')
-    const file = new Blob([<ArrayBuffer>gltf], {type: 'model/gltf-binary'})
-    a.href = URL.createObjectURL(file)
-    a.download = `${asset.name}.gltf`
-    a.click()
-  }, console.error, options)
-}
-
 </script>
 
 <style scoped>
