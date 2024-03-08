@@ -27,6 +27,11 @@ export function createCursor (view: DataView, offset = 0) {
       const value = getFloat16(view, offset, littleEndian)
       offset += 2
       return value
-    }
+    },
+    readUint8 () {
+      const value = view.getUint8(offset)
+      offset += 1
+      return value
+    },
   }
 }

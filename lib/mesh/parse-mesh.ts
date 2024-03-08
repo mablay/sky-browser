@@ -7,6 +7,7 @@ import { decompressBlock } from 'lz4js'
 import { createCursor, type Cursor } from '../cursor'
 
 export interface SkyMeshFileHeader {
+  version: number
   uncompressedSize: number
   compressedSize: number
   numLods: number
@@ -20,11 +21,11 @@ export interface SkyMesh {
    * (definition by Blender) */
   vertices: number[]
 
-  /** A corner references the index of a vertex.
+  /** A corner references a vertex by index.
    * 3 corners constitue a face (triangle).
    * Combined, faces define the surface of a mesh.
-   * @alias indexBuffer */
-  corners: number[]
+   * @alias indexBuffer or faceIndex */
+  index: number[]
 
   /**
    * A Normal vector explains how light bounces of the
@@ -51,7 +52,7 @@ export interface SkyMesh {
  * This information is critical, for a consistent result
  * since each feature impacts the offset of the next.
  */
-interface MeshFlags {
+interface MeshFlags extends Record<string, boolean|undefined|number> {
   hasVertices?: boolean
   hasNormals?: boolean
   hasUVs?: boolean
@@ -63,7 +64,7 @@ interface MeshFlags {
 export function parseMeshFile (file: DataView) {
   const { header, body } = parseMeshFileSections(file)
   console.log('file header:', header)
-  const skyMesh = parseMeshBody(body)
+  const skyMesh = parseMeshBody(body, header.version)
   return { header, skyMesh }
 }
 
@@ -79,6 +80,7 @@ export function parseMeshFile (file: DataView) {
 function parseMeshFileSections (file: DataView) {
   /** partially parsed mesh file header */
   const header: SkyMeshFileHeader = {
+    version: file.getUint8(0x00),
     uncompressedSize: file.getUint32(0x52, true),
     compressedSize: file.getUint32(0x4e, true),
     numLods: file.getUint32(0x44, true)
@@ -101,23 +103,33 @@ function parseMeshFileSections (file: DataView) {
  * @see parseMeshFileSections
  * Most of the body data is little endian encoded.
  */
-export function parseMeshBody (body: DataView) {
+export function parseMeshBody (body: DataView, version = 0x1F) {
   const vertexOffset = 0xb3
   const mesh: Partial<SkyMesh> = {}
 
   /* -------------- body info --------------- */
-  const vertexCount = body.getUint32(0x74, true)
-  const cornerCount = body.getUint32(0x78, true)
-
+  const cursor = createCursor(body, 0x74)
+  const vertexCount = cursor.readUint32()
+  const cornerCount = cursor.readUint32()
   const flags: MeshFlags = {
-    hasVertices: true,
-    hasNormals: true,
-    hasUVs: true,
+    isIdx32: cursor.readUint32(),
+    numPoints: cursor.readUint32(),
+    prop11: cursor.readUint32(),
+    prop12: cursor.readUint32(),
+    prop13: cursor.readUint32(),
+    prop14: cursor.readUint32(),
+    hasNormals: cursor.readUint8() > 0,
+    loadInfo2: !!cursor.readUint8(),
+    loadInfo3: !!cursor.readUint8(),
+    hasVertices: cursor.readUint32() === 0,
+    hasUVs: cursor.readUint32() === 0,
+    flag3: cursor.readUint32(),
+    unk: cursor.skip(16),
     hasIndex: true
   }
   console.log('flags:', flags)
-  const cursor = createCursor(body, vertexOffset)
-  const logOffset = (tag: string) => console.log(tag.padStart(10), 'offset:', cursor.offset.toString(16).padStart(8, '0'), cursor.offset)
+  // const cursor = createCursor(body, vertexOffset)
+  const logOffset = (tag: string) => console.log(tag.padStart(10), 'offset:', cursor.offset.toString(16).toUpperCase().padStart(8, '0'), cursor.offset)
 
   if (flags.hasVertices) {
     logOffset('vertex')
@@ -125,24 +137,27 @@ export function parseMeshBody (body: DataView) {
   }
 
   if (flags.hasNormals) {
-    logOffset('normals') // offset: 20291, length: 10056 !! 20112
+    logOffset('normals')
     mesh.normals = parseNormals(cursor, vertexCount)
   }
 
   if (flags.hasUVs) {
-    logOffset('uv') // 30347
+    logOffset('uv')
     mesh.uv = parseUV(cursor, vertexCount)
   }
   
   if (flags.hasIndex) {
+    // flags are not corretly parsed / applied
+    // some models need to skip some byte, see next line
+    // cursor.skip(vertexCount * 8)
     logOffset('index')
-    mesh.corners = parseCorners(cursor, cornerCount)
+    mesh.index = parseFaceIndex(cursor, cornerCount)
   }
 
   return mesh as SkyMesh
 }
 
-/** NOTE: Seem reliable */
+/** STATUS: Seem reliable */
 function parseVertices (cursor: Cursor, vertexCount: number) {
   const vertices:number[] = []
   for (let i = 0; i < vertexCount; i++) {
@@ -157,8 +172,10 @@ function parseVertices (cursor: Cursor, vertexCount: number) {
   return vertices
 }
 
-/** NOTE: Seems reliable */
-function parseCorners (cursor: Cursor, cornerCount: number) {
+/** STATUS: partially reliable */
+function parseFaceIndex (cursor: Cursor, cornerCount: number) {
+  // AP21_Deer offset: 0x10887
+  // cursor.offset = 0x10887 // x + 12280  || 1535
   const indexBuffer: number[] = []
   for (let i = 0; i < cornerCount; i++) {
     indexBuffer.push(cursor.readUint16())
@@ -166,18 +183,30 @@ function parseCorners (cursor: Cursor, cornerCount: number) {
   return indexBuffer
 }
 
+/**
+ * STATUS: UNRELIABLE!
+ * Interpreting this data range as (x,y,z) normal vectors
+ * worked for JackyHouse.mesh but it seemed to me, that in
+ * most, if not all other cases, this is not how it's done.
+ */
 function parseNormals (cursor: Cursor, vertexCount: number) {
   const normBuffer:number[] = []
   for (let i = 0; i < vertexCount; i++) {
-    // const u1 = cursor.readFloat16()
-    const v1 = cursor.readFloat16()
-    const u2 = cursor.readUint16()
+    // const x = cursor.readFloat32()
+    const x = cursor.readUint8() / 256
+    const y = cursor.readUint8() / 256
+    const z = cursor.readUint8() / 256
+    const w = cursor.readUint8() / 256
+    // const u2 = cursor.readUint16()
     // const v2 = cursor.readUint16()
-    normBuffer.push(u2, v1, 0)
+    normBuffer.push(x, y, z)
   }
   return normBuffer
 }
 
+/**
+ * 
+ */
 function parseUV (cursor: Cursor, vertexCount: number) {
   const uvs:number[] = []
   for (let i = 0; i < vertexCount; i++) {

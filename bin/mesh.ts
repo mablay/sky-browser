@@ -22,14 +22,15 @@ decodeBlock(compressedBuffer, decompressedBuffer, 0, header.compressedSize)
 const mesh = parseMeshBody(new DataView(decompressedBuffer.buffer))
 
 logSection('vertices')
-logSection('normals')
+logSection('normals', 2)
 logSection('uv', 2)
 logSection('corners')
 
 function logSection (prop: 'vertices' | 'normals' | 'uv' | 'corners', cols = 3) {
-  console.log(prop, mesh[prop].length / cols)
-  console.log('   ', mesh[prop].slice(0, cols))
-  console.log('    ...')
-  console.log('   ', mesh[prop].slice(mesh[prop].length - cols))
+  const data = mesh[prop]
+  console.log(prop, data.length / cols)
+  console.log('   ', data.slice(0, cols), '...')
+  console.log('   ', data.slice(data.length - cols))
+  console.log('    min:', Math.min.apply(null, data.filter(x => !Number.isNaN(x))), 'max:', Math.max.apply(null, data.filter(x => !Number.isNaN(x))))
   console.log('')
 }

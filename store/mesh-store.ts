@@ -8,7 +8,7 @@ export const useMeshStore = defineStore('meshStore', () => {
   // const assets = useAssets()
   const apk = useApkStore()
   const meshName = ref('AP13DuskGate_01')
-  const mesh = shallowRef<Mesh>()
+  const mesh = shallowRef<DataView>()
   const meshes = shallowRef<CacheEntry[]>([])
 
   watch(apk, () => {
@@ -35,10 +35,12 @@ export const useMeshStore = defineStore('meshStore', () => {
       return
     }
     meshName.value = filename.slice(0, filename.length - 5)
-    const view = await entry.getDataView()
-    const { header, skyMesh } = parseMeshFile(view)
-    console.log({ header, skyMesh })
-    mesh.value = createMesh(skyMesh)
+    mesh.value = await entry.getDataView()
+
+    // const view = await entry.getDataView()
+    // const { header, skyMesh } = parseMeshFile(view)
+    // console.log({ header, skyMesh })
+    // mesh.value = createMesh(skyMesh)
   }
 
   return { meshes, meshName, mesh, selectMesh }

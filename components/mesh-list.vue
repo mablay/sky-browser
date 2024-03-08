@@ -1,6 +1,6 @@
 <template>
   <div class="sidebar">
-    <div>
+    <!-- <div>
       <div to="/" @click="$router.push('/')" class="btn btn-round">
         &lt;
       </div>
@@ -10,7 +10,7 @@
       <div @click="download" class="btn btn-icon">
         <Icon :icon="downloadSvg" :size="24" />
       </div>
-    </div>
+    </div> -->
     <div class="mesh-list scroll-x rtl">
       <div class="scroll-y ltr">
         <div
@@ -147,7 +147,7 @@ async function download () {
   padding-top: 16px;
   padding-bottom: 16px;
   /* mask-image: linear-gradient(to bottom, rgba(0,0,0,1), rgba(0,0,0,1), rgba(0,0,0,0)), linear-gradient(to top, rgba(0,0,0,1), rgba(0,0,0,1), rgba(0,0,0,0)); */
-  mask-image: linear-gradient(180deg, rgba(0,0,0,1) 90%, rgba(0,0,0,0) 100%), linear-gradient(0deg, rgba(0,0,0,1) 90%, rgba(0,0,0,0) 100%);
+  mask-image: linear-gradient(180deg, rgba(0,0,0,1) 50%, rgba(0,0,0,0) 100%), linear-gradient(0deg, rgba(0,0,0,1) 90%, rgba(0,0,0,0) 100%);
   mask-size: 100% 50%;
   mask-repeat: no-repeat;
   mask-position: bottom, top;
@@ -156,6 +156,7 @@ async function download () {
 .scroll-y {
   direction: ltr;
   /* padding-left: 12px; */
+  overflow-x: scroll;
 }
 .scroll-x {
   direction: ltr;

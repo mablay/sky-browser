@@ -8,6 +8,8 @@ import { ACESFilmicToneMapping, EquirectangularReflectionMapping, Group, Sphere 
 import { meshExampleScene } from '~/lib/mesh/mesh-scene'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 import { useMeshStore } from '~/store/mesh-store.js'
+import { parseMeshFile } from '~/lib/mesh/parse-mesh'
+import { createMesh } from '~/lib/mesh/three-mesh'
 
 const config = useRuntimeConfig()
 
@@ -21,7 +23,14 @@ const group = new Group()
 scene.add(group)
 
 watch(() => meshStore.mesh, async () => {
-  const mesh = toRaw(meshStore.mesh)
+  const view = toRaw(meshStore.mesh) as DataView
+  if (!view) return
+  console.log('view:', view)
+  const { header, skyMesh } = parseMeshFile(view)
+  console.log({ header, skyMesh })
+  const mesh = await createMesh(skyMesh)
+    
+  // const mesh = toRaw(meshStore.mesh)
   if (!mesh) return
   mesh.geometry.computeBoundingSphere()
   const { center, radius } = <Sphere>mesh.geometry.boundingSphere
