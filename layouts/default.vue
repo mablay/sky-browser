@@ -1,6 +1,6 @@
 <template>
   <v-main class="no-top">
-    <ApplicationBar />
+    <!-- <ApplicationBar /> -->
     <drop-overlay
       ref="overlay"
       :show="apk.fileDropRequired ? 'show' : 'auto'"

@@ -1,20 +1,8 @@
 <template>
-  <div class="sidebar">
-    <!-- <div>
-      <div to="/" @click="$router.push('/')" class="btn btn-round">
-        &lt;
-      </div>
-      <div @click="toggleList" class="btn">
-        {{ toggleTitle }}
-      </div>
-    </div> -->
-    <!-- <div @click="download" class="btn btn-icon">
-      <Icon :icon="downloadSvg" :size="24" />
-    </div> -->
+  <div class="sidebar" v-show="showList">
     <div class="mesh-list scroll-x rtl">
       <div class="scroll-y ltr">
         <div
-          v-show="showList"
           v-for="(name, index) of data"
           :key="name"
           :id="`mesh-${index}`"
@@ -27,25 +15,14 @@
 </template>
 
 <script setup lang="ts">
-import { Mesh, Scene } from 'three'
-import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js'
-import downloadSvg from '~/assets/download.svg'
-import { parseMeshFile } from '~/lib/mesh/parse-mesh'
-import { createMesh } from '~/lib/mesh/three-mesh'
 import { useMeshStore } from '~/store/mesh-store'
 
 const meshStore = useMeshStore()
 const data = computed(() => meshStore.meshes.map(asset => asset.filename))
 
 const emit = defineEmits(['update:modelValue'])
-// const { loadMesh, selectedMeshAsset, meshes, meshName } = useAssets()
 
 const showList = ref(true)
-const toggleTitle = computed(() => showList.value ? 'Hide list' : 'Show list')
-
-function toggleList () {
-  showList.value = !showList.value
-}
 
 onKeyStroke('ArrowDown', async (e) => {
   e.preventDefault()

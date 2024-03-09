@@ -1,17 +1,16 @@
 import type { CacheEntry } from "~/lib/apk/apk-cache.js"
 import { useApkStore } from "./apk-store.js"
-import type { Mesh } from "three"
-import { parseMeshFile } from "~/lib/mesh/parse-mesh.js"
-import { createMesh } from "~/lib/mesh/three-mesh.js"
 
 export const useMeshStore = defineStore('meshStore', () => {
   // const assets = useAssets()
   const apk = useApkStore()
-  const meshName = ref('AP13DuskGate_01')
+  // const meshName = ref('AP13DuskGate_01')
+  const meshName = ref('assets/Data/Meshes/Bin/AP13DuskGate_01.mesh')
   const mesh = shallowRef<DataView>()
   const meshes = shallowRef<CacheEntry[]>([])
 
   watch(apk, () => {
+    console.log('[watch] apk')
     const arr:CacheEntry[] = []
     for (const path of apk.files) {
       if (!path.endsWith('.mesh')) continue
@@ -24,18 +23,23 @@ export const useMeshStore = defineStore('meshStore', () => {
     }
     console.log('meshes:', arr.length)
     meshes.value = arr
-  })
+  }, { immediate: true })
 
   async function selectMesh (name: string) {
     console.log('select mesh:', name)
     const filename = name.endsWith('.mesh') ? name : name.concat('.mesh')
+    console.log(filename, apk.apk[filename])
     const entry = apk.apk[filename]
     if (entry === undefined) {
       console.warn(`No mesh for name: ${filename}!`)
       return
     }
-    meshName.value = filename
-    mesh.value = await entry.getDataView()
+    try {
+      mesh.value = await entry.getDataView()
+      meshName.value = filename
+    } catch (error) {
+      console.error(error)      
+    }
 
     // const view = await entry.getDataView()
     // const { header, skyMesh } = parseMeshFile(view)

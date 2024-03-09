@@ -2,21 +2,19 @@
   <div class="app">
     <MeshList v-if="meshStore.meshes.length && uiStore.showSidebar" v-model="meshStore.meshName" />
     <client-only>
-      <MeshViewer :mesh="meshStore.meshName" />
+      <MeshViewer v-if="apk.apk" :mesh="meshStore.meshName" />
     </client-only>
   </div>
-  <!-- <div v-if="meshes.length === 0" class="overlay">
-    <div class="inlay">
-      <DropZone />
-    </div>
-  </div> -->
 </template>
 
 <script setup lang="ts">
+import { useApkStore } from '~/store/apk-store'
 import { useMeshStore } from '~/store/mesh-store'
 import { useUiStore } from '~/store/ui-store'
+
 const meshStore = useMeshStore()
 const uiStore = useUiStore()
+const apk = useApkStore()
 
 </script>
 
