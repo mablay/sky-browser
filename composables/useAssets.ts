@@ -1,12 +1,13 @@
 // @ts-ignore
 import { decompressBlock } from 'lz4js'
 import { ZipReader, type Entry, BlobReader, BlobWriter } from '@zip.js/zip.js'
-import { BufferGeometry, Float32BufferAttribute, Line, LineBasicMaterial, Mesh, MeshBasicMaterial, MeshStandardMaterial, MeshStandardMaterialParameters, ObjectSpaceNormalMap, Points, PointsMaterial, TangentSpaceNormalMap, TextureLoader, Vector2 } from 'three'
+import { BufferGeometry, Float32BufferAttribute, Line, LineBasicMaterial, Mesh, MeshBasicMaterial, MeshStandardMaterial, ObjectSpaceNormalMap, Points, PointsMaterial, TangentSpaceNormalMap, TextureLoader, Vector2, type MeshStandardMaterialParameters } from 'three'
 import { fileDrop } from '~/lib/file-drop'
 import { ktxImage } from '~/lib/ktx/ktx'
 import { useTexgenpack } from '~/lib/texgenpack/texgenpack'
 import { defaultImageName, defaultMeshName } from '~/config'
 import { getFloat16 } from '@petamoriken/float16'
+import type { CacheEntry } from '~/lib/apk/apk-cache'
 
 export type Asset = {
   name: string
@@ -83,7 +84,7 @@ export default function useAssets () {
     }).catch(console.error)
   }
 
-  async function loadMesh (entry: Entry, cubeRenderTarget?: THREE.WebGLCubeRenderTarget) {
+  async function loadMesh (entry: CacheEntry, cubeRenderTarget?: THREE.WebGLCubeRenderTarget) {
     const { indexBuffer, vertexBuffer, normBuffer, faceCount, rawUV } = await parseMeshEntry(entry)
 
     const geometry = new BufferGeometry()
@@ -186,10 +187,11 @@ export default function useAssets () {
   }
 }
 
-async function parseMeshEntry (entry: Entry) {
+async function parseMeshEntry (entry: CacheEntry) {
   const blobWriter = new BlobWriter()
-  const arrayBuffer = await entry.getData!(blobWriter).then(blob => blob.arrayBuffer())
-  const view = new DataView(arrayBuffer)
+  // const arrayBuffer = await entry.getData!(blobWriter).then(blob => blob.arrayBuffer())
+  // const view = new DataView(arrayBuffer)
+  const view = await entry.getDataView()
 
   // read params from file
   const uncompressedSize = view.getUint32(0x52, true)
@@ -201,7 +203,7 @@ async function parseMeshEntry (entry: Entry) {
     numLods
   })
 
-  const src = new Uint8Array(arrayBuffer.slice(0x56, 0x56 + compressedSize))
+  const src = new Uint8Array(view.buffer.slice(0x56, 0x56 + compressedSize))
   const dest = new Uint8Array(uncompressedSize)
   decompressBlock(src, dest, 0, compressedSize, 0)
   const meshData = parseMesh(new DataView(dest.buffer))

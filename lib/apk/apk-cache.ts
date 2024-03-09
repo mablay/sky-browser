@@ -50,8 +50,9 @@ export async function apkFromFile (file: File, cache: APK = {}) {
   
   const zipEntries = await unzip(file)
   const apk: APK = {}
+  // console.log('[apkFromFile] cache:', toRaw(cache))
   for await (const entry of zipEntries) {
-    const cached = cache[entry.filename] !== undefined
+    const cached = cache[entry.filename]?.cached
     apk[entry.filename] = new FileEntry(entry, cached, cacheFile)
   }
 
@@ -82,10 +83,11 @@ export async function apkFromIdb () {
 /** write file to cache and update its metadata */
 export async function cacheFile (entry: ApkEntry, buffer: ArrayBuffer) {
   entry.cached = true
-  console.log('write to cache:', {
-    entry,
-    buffer
-  })
+  console.log('write to cache:', entry.filename, entry.size)
+  // {
+  //   entry,
+  //   buffer
+  // })
   await Promise.all([
     idb.set(entry.filename, buffer, apkStore),  
     idb.set(entry.filename, {

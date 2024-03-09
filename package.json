@@ -13,22 +13,30 @@
     "deploy": "npx gh-pages --dotfiles -d .output/public"
   },
   "devDependencies": {
+    "@types/jsdom": "^21.1.6",
+    "@types/lz4": "^0.6.4",
     "@types/node": "^18",
     "@types/three": "^0.152.1",
-    "@vueuse/core": "^10.1.2",
+    "@vueuse/core": "^10.8.0",
     "@vueuse/nuxt": "^10.1.2",
-    "nuxt": "^3.9.3"
+    "nuxt": "^3.10.3",
+    "vite-plugin-vuetify": "^2.0.1",
+    "vite-plugin-wasm": "^3.3.0",
+    "vuetify": "^3.5.6"
   },
   "dependencies": {
+    "@mdi/font": "^7.4.47",
     "@petamoriken/float16": "^3.8.4",
     "@pinia/nuxt": "^0.5.1",
     "@zip.js/zip.js": "^2.7.16",
     "idb-keyval": "^6.2.1",
     "leather": "^3.0.3",
+    "lz4": "^0.6.5",
     "lz4js": "^0.2.0",
     "pinia": "^2.1.7",
     "three": "^0.153.0",
-    "three-perspective": "^1.0.0"
+    "three-perspective": "^1.0.0",
+    "vblob": "^1.1.0"
   },
   "overrides": {
     "vue": "latest"

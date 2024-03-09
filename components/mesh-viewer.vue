@@ -6,30 +6,37 @@
 import { Perspective } from 'three-perspective'
 import { ACESFilmicToneMapping, EquirectangularReflectionMapping, Group, Sphere } from 'three'
 import { meshExampleScene } from '~/lib/mesh/mesh-scene'
-import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader'
+import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
+import { useMeshStore } from '~/store/mesh-store.js'
+import { parseMeshFile } from '~/lib/mesh/parse-mesh'
+import { createMesh } from '~/lib/mesh/three-mesh'
 
 const config = useRuntimeConfig()
 
 const perspective = ref<InstanceType<typeof Perspective>>()
 
-const { loadMesh, selectedMeshAsset, meshes, meshName } = useAssets()
+const meshStore = useMeshStore()
+// const { loadMesh, selectedMeshAsset, meshes, meshName } = useAssets()
 
 const { scene, cubeCamera, cubeRenderTarget } = meshExampleScene()
 const group = new Group()
 scene.add(group)
 
-watch([meshes, meshName], async () => {
-  const asset = toRaw(selectedMeshAsset.value)
-  if (!asset) return
-  console.log('Loading asset from APK:', asset)
-  // const mesh = await loadSkyMesh(props.mesh, cubeRenderTarget)
-  const mesh = await loadMesh(asset.entry, cubeRenderTarget)
-
+watch(() => meshStore.mesh, async () => {
+  const view = toRaw(meshStore.mesh) as DataView
+  if (!view) return
+  console.clear()
+  const { header, skyMesh } = parseMeshFile(view)
+  console.log({ header, skyMesh })
+  const mesh = await createMesh(skyMesh)
+    
+  // const mesh = toRaw(meshStore.mesh)
+  if (!mesh) return
   mesh.geometry.computeBoundingSphere()
   const { center, radius } = <Sphere>mesh.geometry.boundingSphere
   mesh.geometry.translate(-center.x, -center.y, -center.z)
   mesh.scale.divideScalar(radius / 5)
-  console.log('loaded mesh:', asset.name, { center, radius, mesh })
+  console.log('[ThreeJS]', meshStore.meshName.split('/').pop(), { radius, center, mesh })
   group.clear()
   group.add(mesh)
   // @ts-ignore
@@ -37,7 +44,6 @@ watch([meshes, meshName], async () => {
   if (!renderer || !render) return
   cubeCamera.update(renderer, scene )
   render()
-  
 }, { immediate: true })
 
 onMounted(() => {

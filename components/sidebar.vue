@@ -1,5 +1,6 @@
 <template>
   <div class="sidebar">
+    <div class="top-spacer"></div>
     <div>
       <div to="/" @click="$router.push('/')" class="btn btn-round">
         &lt;
@@ -26,7 +27,7 @@
 </template>
 
 <script setup lang="ts">
-import type { Asset } from 'composables/useAssets'
+import type { Asset } from '~/composables/useAssets'
 import downloadSvg from '~/assets/download.svg'
 
 const emit = defineEmits(['download', 'select'])
@@ -81,6 +82,10 @@ onKeyStroke('ArrowUp', (e) => {
   background-color: #0004;
   color: white;
   user-select: none;
+}
+.top-spacer {
+  height: 48px;
+  width: 100%;
 }
 .btn {
   text-align: center;

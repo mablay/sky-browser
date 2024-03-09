@@ -13,7 +13,7 @@ export class IdbEntry implements CacheEntry {
   }
 
   getDataView(): Promise<DataView> {
-    return this.getData().then(buffer => new DataView(buffer.buffer))
+    return this.getData().then(buffer => new DataView(buffer as ArrayBufferLike))
   }
 
   async getData () {

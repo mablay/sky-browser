@@ -1,28 +1,29 @@
 <template>
   <div class="app">
-    <MeshList v-if="meshes.length" v-model="meshName" />
+    <MeshList v-if="meshStore.meshes.length && uiStore.showSidebar" v-model="meshStore.meshName" />
     <client-only>
-      <MeshViewer :mesh="meshName" />
+      <MeshViewer :mesh="meshStore.meshName" />
     </client-only>
   </div>
-  <div v-if="meshes.length === 0" class="overlay">
+  <!-- <div v-if="meshes.length === 0" class="overlay">
     <div class="inlay">
       <DropZone />
     </div>
-  </div>
+  </div> -->
 </template>
 
 <script setup lang="ts">
-// const meshName = ref<string>('AP13DuskGate_01')
-// const meshName = ref<string>('ColosseumMerged_03')
-const { meshes, meshName } = useAssets()
+import { useMeshStore } from '~/store/mesh-store'
+import { useUiStore } from '~/store/ui-store'
+const meshStore = useMeshStore()
+const uiStore = useUiStore()
 
 </script>
 
 <style scoped>
 .app {
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
   display: flex;
   flex-flow: row nowrap;
