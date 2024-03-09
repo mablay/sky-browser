@@ -1,6 +1,6 @@
 {
   "name": "sky-browser",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Asset explorer for Sky - children of the light",
   "private": true,
   "scripts": {
