@@ -25,7 +25,7 @@ scene.add(group)
 watch(() => meshStore.mesh, async () => {
   const view = toRaw(meshStore.mesh) as DataView
   if (!view) return
-  // console.log('view:', view)
+  console.clear()
   const { header, skyMesh } = parseMeshFile(view)
   console.log({ header, skyMesh })
   const mesh = await createMesh(skyMesh)

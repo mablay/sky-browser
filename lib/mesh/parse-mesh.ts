@@ -62,11 +62,21 @@ interface MeshFlags extends Record<string, boolean|undefined|number> {
 }
 
 export function parseMeshFile (file: DataView) {
-  const { header, body } = parseMeshFileSections(file)
-  console.clear()
-  console.log('file version:', header.version)
+  const header = parseMeshFileHeader(file)
+  const body = decompressMeshFileBody(file, header)
   const skyMesh = parseMeshBody(body, header.version)
   return { header, skyMesh }
+}
+
+export function parseMeshFileHeader (file: DataView) {
+  /** partially parsed mesh file header */
+  const header: SkyMeshFileHeader = {
+    version: file.getUint8(0x00),
+    uncompressedSize: file.getUint32(0x52, true),
+    compressedSize: file.getUint32(0x4e, true),
+    numLods: file.getUint32(0x44, true)
+  }
+  return header
 }
 
 /**  
@@ -78,22 +88,14 @@ export function parseMeshFile (file: DataView) {
   * and returns a partially parsed header and a
   * decompressed body.
 */
-function parseMeshFileSections (file: DataView) {
-  /** partially parsed mesh file header */
-  const header: SkyMeshFileHeader = {
-    version: file.getUint8(0x00),
-    uncompressedSize: file.getUint32(0x52, true),
-    compressedSize: file.getUint32(0x4e, true),
-    numLods: file.getUint32(0x44, true)
-  }
-
+function decompressMeshFileBody (file: DataView, header: SkyMeshFileHeader) {
   /* ------ decompress mesh buffer ------ */
   const compressedBuffer = new Uint8Array(file.buffer.slice(0x56, 0x56 + header.compressedSize))
   const decompressedBuffer = new Uint8Array(header.uncompressedSize)
   decompressBlock(compressedBuffer, decompressedBuffer, 0, header.compressedSize, 0)
   /** decompressed mesh file buffer */
   const body = new DataView(decompressedBuffer.buffer)
-  return { header, body }
+  return body
 }
 
 /**
@@ -103,6 +105,7 @@ function parseMeshFileSections (file: DataView) {
  * Most of the body data is little endian encoded.
  */
 export function parseMeshBody (body: DataView, version = 0x1F) {
+  // console.log('file version:', version)
   const vertexOffset = 0xb3
   const mesh: Partial<SkyMesh> = {}
 
@@ -126,22 +129,22 @@ export function parseMeshBody (body: DataView, version = 0x1F) {
     unk: cursor.skip(16),
     hasIndex: true
   }
-  console.log('flags:', flags)
+  // console.log('flags:', flags)
   // const cursor = createCursor(body, vertexOffset)
   const logOffset = (tag: string) => console.log(tag.padStart(10), 'offset:', cursor.offset.toString(16).toUpperCase().padStart(8, '0'), cursor.offset)
 
   if (flags.hasVertices) {
-    logOffset('vertex')
+    // logOffset('vertex')
     mesh.vertices = parseVertices(cursor, vertexCount)
   }
 
   if (flags.hasNormals) {
-    logOffset('normals')
+    // logOffset('normals')
     mesh.normals = parseNormals(cursor, vertexCount)
   }
 
   if (flags.hasUVs) {
-    logOffset('uv')
+    // logOffset('uv')
     mesh.uv = parseUV(cursor, vertexCount)
   }
   
@@ -149,7 +152,7 @@ export function parseMeshBody (body: DataView, version = 0x1F) {
     // flags are not corretly parsed / applied
     // some models need to skip some byte, see next line
     // cursor.skip(vertexCount * 8)
-    logOffset('index')
+    // logOffset('index')
     mesh.index = parseFaceIndex(cursor, cornerCount)
   }
 

@@ -9,3 +9,7 @@ declare module 'lz4js' {
     dIndex: number
   ): number
 }
+
+declare module 'vblob' {
+  const FileReader: any
+}
