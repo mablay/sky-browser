@@ -1,11 +1,9 @@
 <template>
   <v-app-bar :elevation="0" color="#2220" density="compact">
-    <v-app-bar-title v-if="uiStore.showSidebar" class="title">
-      <v-btn icon="mdi-chevron-left" @click="() => uiStore.showSidebar = false" variant="tonal" density="comfortable" />
-      <v-btn icon="mdi-download" variant="tonal" density="comfortable" class="ml-4" @click="downloadMesh"></v-btn>
-    </v-app-bar-title>
-    <v-app-bar-title v-else class="title">
-      <v-btn icon="mdi-chevron-right" @click="() => uiStore.showSidebar = true" variant="tonal" density="comfortable" />
+    <v-app-bar-title class="title">
+      <v-btn v-if="uiStore.showSidebar" icon="mdi-chevron-left" @click="() => uiStore.showSidebar = false" variant="tonal" density="comfortable" />
+      <v-btn v-if="uiStore.showSidebar" icon="mdi-download" variant="tonal" density="comfortable" class="ml-4" @click="() => downloadMesh()"></v-btn>
+      <v-btn v-if="!uiStore.showSidebar" icon="mdi-chevron-right" @click="() => uiStore.showSidebar = true" variant="tonal" density="comfortable" />
     </v-app-bar-title>
 
     <v-spacer></v-spacer>

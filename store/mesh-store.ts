@@ -5,7 +5,7 @@ export const useMeshStore = defineStore('meshStore', () => {
   // const assets = useAssets()
   const apk = useApkStore()
   // const meshName = ref('AP13DuskGate_01')
-  const meshName = ref('assets/Data/Meshes/Bin/AP13DuskGate_01.mesh')
+  const meshName = useLocalStorage('sky-mesh-name', 'assets/Data/Meshes/Bin/AP13DuskGate_01.mesh')
   const mesh = shallowRef<DataView>()
   const meshes = shallowRef<CacheEntry[]>([])
 
@@ -23,12 +23,15 @@ export const useMeshStore = defineStore('meshStore', () => {
     }
     console.log('meshes:', arr.length)
     meshes.value = arr
-  }, { immediate: true })
+    if (arr.length > 0) {
+      selectMesh(meshName.value)
+    }
+  })
 
   async function selectMesh (name: string) {
     console.log('select mesh:', name)
     const filename = name.endsWith('.mesh') ? name : name.concat('.mesh')
-    console.log(filename, apk.apk[filename])
+    // console.log(toRaw(apk.apk[filename]))
     const entry = apk.apk[filename]
     if (entry === undefined) {
       console.warn(`No mesh for name: ${filename}!`)

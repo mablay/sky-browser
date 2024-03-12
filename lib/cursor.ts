@@ -33,5 +33,10 @@ export function createCursor (view: DataView, offset = 0) {
       offset += 1
       return value
     },
+    slice (start: number, end: number) {
+      const buffer = view.buffer.slice(start, end)
+      offset += (end - start)
+      return buffer
+    }
   }
 }

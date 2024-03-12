@@ -12,7 +12,7 @@ export function parseMeshFile (file: Buffer) {
 }
 
 /** NodeJS implementation of lz4 decompression */
-function decompressMeshFileBody (file: Buffer, header: SkyMeshFileHeader) {
+export function decompressMeshFileBody (file: Buffer, header: SkyMeshFileHeader) {
   const compressedBuffer = file.subarray(0x56, 0x56 + header.compressedSize)
   const decompressedBuffer = Buffer.alloc(header.uncompressedSize)
   decodeBlock(compressedBuffer, decompressedBuffer, 0, header.compressedSize)

@@ -45,6 +45,8 @@ export interface SkyMesh {
    * is strange.
    */
   uv: number[]
+
+  flags: Record<string, any>
 }
 
 /**
@@ -52,15 +54,28 @@ export interface SkyMesh {
  * This information is critical, for a consistent result
  * since each feature impacts the offset of the next.
  */
-interface MeshFlags extends Record<string, boolean|undefined|number> {
-  hasVertices?: boolean
-  hasNormals?: boolean
-  hasUVs?: boolean
-  hasIndex?: boolean
-  hasBones?: boolean
-  hasAnimation?: boolean
+interface MeshFlags extends Record<string, number | any> {
+  vertexCount: number
+  cornerCount: number
+  skipMeshPos: number
+  loadMeshNorms: number
+  skipUvs: number
+  // hasIndex: boolean
+  // hasBones?: number
+  // hasAnimation?: number
 }
 
+/**  
+  * A sky mesh file has two parts
+  * - header: 86 bytes (structured data)
+  * - body: remaining bytes (lz4 compressed)
+  *
+  * This method takes the data view of a .mesh file
+  * parses the file header,
+  * decompresses the file body,
+  * and returns header and a parsed version of the
+  * compressed body.
+*/
 export function parseMeshFile (file: DataView) {
   const header = parseMeshFileHeader(file)
   const body = decompressMeshFileBody(file, header)
@@ -68,8 +83,10 @@ export function parseMeshFile (file: DataView) {
   return { header, skyMesh }
 }
 
+/** partially parsed mesh file header.
+ * Some bytes remain un-parsed and might actually be relevant!
+ */
 export function parseMeshFileHeader (file: DataView) {
-  /** partially parsed mesh file header */
   const header: SkyMeshFileHeader = {
     version: file.getUint8(0x00),
     uncompressedSize: file.getUint32(0x52, true),
@@ -79,15 +96,7 @@ export function parseMeshFileHeader (file: DataView) {
   return header
 }
 
-/**  
-  * A sky mesh file has two parts
-  * - header: 86 bytes (structured data)
-  * - body: remaining bytes (lz4 compressed)
-  *
-  * This method takes the data view of a .mesh file
-  * and returns a partially parsed header and a
-  * decompressed body.
-*/
+/** used for LZ4 decompression of the .mesh files body */
 function decompressMeshFileBody (file: DataView, header: SkyMeshFileHeader) {
   /* ------ decompress mesh buffer ------ */
   const compressedBuffer = new Uint8Array(file.buffer.slice(0x56, 0x56 + header.compressedSize))
@@ -96,6 +105,72 @@ function decompressMeshFileBody (file: DataView, header: SkyMeshFileHeader) {
   /** decompressed mesh file buffer */
   const body = new DataView(decompressedBuffer.buffer)
   return body
+}
+
+/** the first part of the decompressed .mesh file body section
+ * contains meta information about the mesh.
+ * Some of that affects how the rest of the data is parsed!
+ * Beware: Some of this is likely incorrect.
+ * Either because I misread the mesh.hexpat template
+ * or because it itself is not 100% accurate.
+ * @see https://github.com/oldmud0/SkyEngineTools/blob/master/imhex/mesh.hexpat
+ */
+export function parseMeshFlags (cursor: Cursor, version = 0x1F): MeshFlags {
+  return {
+    inf: cursor.readFloat32(),
+    bboxOld: {
+      x0: cursor.readFloat32(),
+      y0: cursor.readFloat32(),
+      z0: cursor.readFloat32(),
+      x1: cursor.readFloat32(),
+      y2: cursor.readFloat32(),
+      z3: cursor.readFloat32(),
+    },
+    bbox: { // version >= 0x1c
+      x0: cursor.readFloat32(),
+      y0: cursor.readFloat32(),
+      z0: cursor.readFloat32(),
+      x1: cursor.readFloat32(),
+      y2: cursor.readFloat32(),
+      z3: cursor.readFloat32(),
+    },
+    padding: {
+      p01: cursor.readFloat32(),
+      p02: cursor.readFloat32(),
+      p03: cursor.readFloat32(),
+      p04: cursor.readFloat32(),
+      p05: cursor.readFloat32(),
+      p06: cursor.readFloat32(),
+      p07: cursor.readFloat32(),
+      p08: cursor.readFloat32(),
+      p09: cursor.readFloat32(),
+      p10: cursor.readFloat32(),
+      p11: cursor.readFloat32(),
+      p12: cursor.readFloat32(),
+      p13: cursor.readFloat32(),
+      p14: cursor.readFloat32(),
+      p15: cursor.readFloat32(),
+      p16: cursor.readFloat32(),
+    },
+    vertexCount: cursor.readUint32(),
+    cornerCount: cursor.readUint32(),
+    isIdx32: cursor.readUint32(),
+    numPoints: cursor.readUint32(),
+    prop11: cursor.readUint32(),
+    prop12: cursor.readUint32(),
+    prop13: cursor.readUint32(),
+    prop14: cursor.readUint32(),
+    loadMeshNorms: cursor.readUint8(),
+    loadInfo2: cursor.readUint8(),
+    loadInfo3: cursor.readUint8(),
+    skipMeshPos: cursor.readUint32(),
+    skipUvs: cursor.readUint32(),
+    flag3: cursor.readUint32(),
+    unk1: cursor.readUint32(),
+    unk2: cursor.readUint32(),
+    unk3: cursor.readUint32(),
+    unk4: cursor.readUint32(),
+  }
 }
 
 /**
@@ -110,45 +185,36 @@ export function parseMeshBody (body: DataView, version = 0x1F) {
   const mesh: Partial<SkyMesh> = {}
 
   /* -------------- body info --------------- */
-  const cursor = createCursor(body, 0x74)
-  const vertexCount = cursor.readUint32()
-  const cornerCount = cursor.readUint32()
-  const flags: MeshFlags = {
-    isIdx32: cursor.readUint32(),
-    numPoints: cursor.readUint32(),
-    prop11: cursor.readUint32(),
-    prop12: cursor.readUint32(),
-    prop13: cursor.readUint32(),
-    prop14: cursor.readUint32(),
-    hasNormals: cursor.readUint8() > 0,
-    loadInfo2: !!cursor.readUint8(),
-    loadInfo3: !!cursor.readUint8(),
-    hasVertices: cursor.readUint32() === 0,
-    hasUVs: cursor.readUint32() === 0,
-    flag3: cursor.readUint32(),
-    unk: cursor.skip(16),
-    hasIndex: true
-  }
+  const cursor = createCursor(body) // 0x74
+  /** the name flags is up for debate, could also be info, meta, etc. */
+  const flags = parseMeshFlags(cursor, version)
+  const { vertexCount, cornerCount } = flags
+  /** can this be found in the flags? */
+  const hasIndex = true
+
+
   // console.log('flags:', flags)
   // const cursor = createCursor(body, vertexOffset)
-  const logOffset = (tag: string) => console.log(tag.padStart(10), 'offset:', cursor.offset.toString(16).toUpperCase().padStart(8, '0'), cursor.offset)
+  // const logOffset = (tag: string) => console.log(tag.padStart(10), 'offset:', cursor.offset.toString(16).toUpperCase().padStart(8, '0'), cursor.offset)
 
-  if (flags.hasVertices) {
+  /* --- Conditional parsing of mesh features --- */
+
+  if (flags.skipMeshPos === 0) {
     // logOffset('vertex')
     mesh.vertices = parseVertices(cursor, vertexCount)
   }
 
-  if (flags.hasNormals) {
+  if (flags.loadMeshNorms > 0) {
     // logOffset('normals')
     mesh.normals = parseNormals(cursor, vertexCount)
   }
 
-  if (flags.hasUVs) {
+  if (flags.skipUvs === 0) {
     // logOffset('uv')
     mesh.uv = parseUV(cursor, vertexCount)
   }
   
-  if (flags.hasIndex) {
+  if (hasIndex) {
     // flags are not corretly parsed / applied
     // some models need to skip some byte, see next line
     // cursor.skip(vertexCount * 8)
@@ -156,6 +222,7 @@ export function parseMeshBody (body: DataView, version = 0x1F) {
     mesh.index = parseFaceIndex(cursor, cornerCount)
   }
 
+  mesh.flags = flags
   return mesh as SkyMesh
 }
 
@@ -207,7 +274,12 @@ function parseNormals (cursor: Cursor, vertexCount: number) {
 }
 
 /**
- * 
+ * STATUS: Worked well when applied to FriendshipStatue.
+ * But I only managed that with a lot of manual effort.
+ * Level files are required to link a .mesh file to the
+ * correct .ktx file. Once mesh parsing becomes more
+ * stable, I'll tend to this feature and we can test
+ * UV mapping.
  */
 function parseUV (cursor: Cursor, vertexCount: number) {
   const uvs:number[] = []

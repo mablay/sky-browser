@@ -1,5 +1,5 @@
 export const useUiStore = defineStore('uiStore', () => {
-  const showSidebar = useState('showList', () => true)
+  const showSidebar = useState('sidebarShowList', () => true)
 
   return { showSidebar }
 })

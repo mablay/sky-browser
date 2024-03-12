@@ -38,7 +38,7 @@ watch(() => meshStore.mesh, async () => {
     const { center, radius } = <Sphere>mesh.geometry.boundingSphere
     mesh.geometry.translate(-center.x, -center.y, -center.z)
     mesh.scale.divideScalar(radius / 5)
-    console.log('[ThreeJS]', meshStore.meshName.split('/').pop(), { radius, center, mesh })
+    // console.log('[ThreeJS]', meshStore.meshName.split('/').pop(), { radius, center, mesh })
     group.clear()
     group.add(mesh)
     // @ts-ignore
@@ -52,7 +52,6 @@ watch(() => meshStore.mesh, async () => {
 }, { immediate: true })
 
 onMounted(() => {
-  meshStore.selectMesh(meshStore.meshName)
   // @ts-ignore
   const { orbit, render, renderer } = perspective.value
   orbit.object.position.set(-6, 10, -10)

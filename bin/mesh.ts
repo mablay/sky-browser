@@ -2,13 +2,14 @@
 import { Scene } from 'three'
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js'
 import { createReadStream, readFileSync, writeFileSync } from "fs"
-import { parseMeshFile } from "../lib/mesh/nodejs-mesh"
+import { decompressMeshFileBody, parseMeshFile } from "../lib/mesh/nodejs-mesh"
 import { createMesh } from "../lib/mesh/three-mesh"
 import { FileReader } from 'vblob'
 import { basename, join } from 'path'
 import { ZipReader, type Entry } from "@zip.js/zip.js"
-import { WritableStream } from 'node:stream/web'
-const { ReadableStream } = require('node:stream/web');
+import { WritableStream, ReadableStream } from 'node:stream/web'
+import { createCursor } from '../lib/cursor'
+import { parseMeshFileHeader, parseMeshFlags } from '../lib/mesh/parse-mesh'
 
 // inject FileReader for GLTF exporter
 globalThis.FileReader = FileReader
@@ -36,10 +37,13 @@ if (path.endsWith('.apk')) {
 }
 
 async function extractApk (apkPath: string, outDir: string) {
+  const flagsOk: ReturnType<typeof parseMeshFlags>[] = []
+  const flagsNok: ReturnType<typeof parseMeshFlags>[] = []
   console.log('scanning APK...')
   let success = 0
   let fail = 0
-  const rs = createReadStream(path)
+  const rs = createReadStream(apkPath)
+  // @ts-ignore
   const readable = ReadableStream.from(rs)
   const zipReader = new ZipReader<Entry>(readable)
   const apk = zipReader.getEntriesGenerator()
@@ -55,19 +59,31 @@ async function extractApk (apkPath: string, outDir: string) {
     })
     const data = await entry.getData(ws)
     const file = Buffer.concat(chunks)
-    const dstPath = join(outDir, `${basename(entry.filename, '.mesh')}.gltf`)
+    const name = basename(entry.filename, '.mesh')
+    const dstPath = join(outDir, `${name}.gltf`)
+
+    const view = new DataView(file.buffer)
+    const header = parseMeshFileHeader(view)
+    const body = decompressMeshFileBody(file, header)
+  
+    const cursor = createCursor(body)
+    const flags = parseMeshFlags(cursor)
     try {
       await extractGltf(file, dstPath)
       console.log('✅', dstPath)
+      flagsOk.push({ name, ...flags })
       success++
     } catch (error: any) {
       console.error('❌', dstPath, red(error.message))
+      flagsNok.push({ name, ...flags })
       fail++
     }
   }
   console.log('Total mesh files:  ', success + fail)
   console.log('Extracted files:   ', success)
   console.log('Failed extractions:', fail)
+  // writeFileSync('data/flags-ok.json', JSON.stringify(flagsOk, null, 4))
+  // writeFileSync('data/flags-nok.json', JSON.stringify(flagsNok, null, 4))
 }
 
 /**
@@ -108,5 +124,6 @@ async function extractGltf (file: Buffer, path: string) {
     throw new Error('Unexpected GLTF data type!')
   }
   const buffer = Buffer.from(gltf)
-  writeFileSync(path, buffer)  
+  writeFileSync(path, buffer)
+
 }

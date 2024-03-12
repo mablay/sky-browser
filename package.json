@@ -3,6 +3,7 @@
   "version": "0.2.0",
   "description": "Asset explorer for Sky - children of the light",
   "private": true,
+  "bin": "bin/mesh.js",
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
